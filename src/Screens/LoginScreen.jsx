@@ -30,14 +30,14 @@ export default function LoginScreen() {
 
     const { email, password } = formData;
 
-    if (email.length === 0 || password.length === 0) {
+    if (email.trim().length === 0 || password.trim().length === 0) {
       console.log("All fields are required!");
       return;
     }
 
     const normalizedFormData = {
-      email: email.toLowerCase(),
-      password,
+      email: email.trim().toLowerCase(),
+      password: password.trim(),
     };
 
     Keyboard.dismiss();
@@ -107,7 +107,7 @@ export default function LoginScreen() {
                     }
                     value={formData.password}
                     placeholder="Password"
-                    secureTextEntry
+                    secureTextEntry={isHidePassword ? true : false}
                     keyboardType="default"
                     placeholderTextColor="#BDBDBD"
                     // onFocus={() => {
@@ -123,7 +123,7 @@ export default function LoginScreen() {
                 </View>
               </KeyboardAvoidingView>
               <TouchableOpacity
-                onPress={keyboardHide}
+                onPress={handleSubmit}
                 style={styles.loginButton}
                 activeOpacity={0.7}
               >
