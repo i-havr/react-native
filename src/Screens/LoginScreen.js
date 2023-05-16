@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 
 import {
   StyleSheet,
@@ -23,6 +24,7 @@ const initialState = {
 export default function LoginScreen() {
   const [formData, setFormData] = useState(initialState);
   const [isHidePassword, setIsHidePassword] = useState(true);
+  const navigation = useNavigation();
   // const [isShowKeyboard, setIsShowKeyboard] = useState(false);
 
   const handleSubmit = (event) => {
@@ -129,7 +131,10 @@ export default function LoginScreen() {
               >
                 <Text style={styles.textBtn}>Login</Text>
               </TouchableOpacity>
-              <TouchableOpacity activeOpacity={0.7}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Registration")}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.textRegister}>
                   Don't have an account? Register
                 </Text>
