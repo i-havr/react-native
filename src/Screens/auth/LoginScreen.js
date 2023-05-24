@@ -14,7 +14,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 
-import bgImage from "../../assets/images/bg.jpg";
+import bgImage from "../../../assets/images/bg.jpg";
 
 const initialState = {
   email: "",
@@ -44,6 +44,7 @@ export default function LoginScreen() {
 
     Keyboard.dismiss();
     setFormData(initialState);
+    navigation.navigate("Home");
     console.log(normalizedFormData, "Login data has been sent");
   };
 

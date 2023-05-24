@@ -15,8 +15,8 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 
-import bgImage from "../../assets/images/bg.jpg";
-import AddAvatarIcon from "../../assets/icons/addAvatarPlus.png";
+import bgImage from "../../../assets/images/bg.jpg";
+import AddAvatarIcon from "../../../assets/icons/addAvatarPlus.png";
 
 const initialState = {
   login: "",
@@ -52,6 +52,7 @@ export default function RegistrationScreen() {
 
     Keyboard.dismiss();
     setFormData(initialState);
+    navigation.navigate("Home");
     console.log(normalizedFormData, "Register data has been sent");
   };
 
