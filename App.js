@@ -1,13 +1,13 @@
 import "react-native-gesture-handler";
+import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
 import { useFonts } from "expo-font";
-import { StyleSheet, Text, View } from "react-native";
 
 import RegistrationScreen from "./src/Screens/auth/RegistrationScreen";
 import LoginScreen from "./src/Screens/auth/LoginScreen";
-import Home from "./src/Screens/Home";
+import Home from "./src/Screens/mainScreen/Home";
 
 const AuthStack = createStackNavigator();
 
@@ -17,8 +17,6 @@ export default function App() {
     "Roboto-Medium": require("./assets/fonts/Roboto-Medium.ttf"),
     "Roboto-Bold": require("./assets/fonts/Roboto-Bold.ttf"),
   });
-
-  // const routing = useRoute({});
 
   if (!fontsLoaded) {
     return null;

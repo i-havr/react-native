@@ -1,4 +1,5 @@
-import { useState } from "react";
+import React, { useState } from "react";
+
 import { useNavigation } from "@react-navigation/native";
 
 import {
@@ -15,8 +16,10 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 
+import { EvilIcons } from "@expo/vector-icons";
+
 import bgImage from "../../../assets/images/bg.jpg";
-import AddAvatarIcon from "../../../assets/icons/addAvatarPlus.png";
+import Avatar from "../../../assets/images/avatar.png";
 
 const initialState = {
   login: "",
@@ -28,11 +31,12 @@ export default function RegistrationScreen() {
   const [formData, setFormData] = useState(initialState);
   const [isHidePassword, setIsHidePassword] = useState(true);
   const navigation = useNavigation();
-  // const [isShowKeyboard, setIsShowKeyboard] = useState(false);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const addImage = () => {
+    console.log("Click Add Image Icon!");
+  };
 
+  const handleSubmit = () => {
     const { login, email, password } = formData;
 
     if (
@@ -56,25 +60,9 @@ export default function RegistrationScreen() {
     console.log(normalizedFormData, "Register data has been sent");
   };
 
-  // const keyboardDidHideCallback = () => {
-  //   setIsShowKeyboard(false);
-  // };
-
   const keyboardHide = () => {
-    //  setIsShowKeyboard(false);
     Keyboard.dismiss();
   };
-
-  // useEffect(() => {
-  //   const keyboardDidHide = Keyboard.addListener(
-  //     "keyboardDidHide",
-  //     keyboardDidHideCallback
-  //   );
-
-  //   return () => {
-  //     keyboardDidHide?.remove();
-  //   };
-  // });
 
   return (
     <View style={styles.container}>
@@ -83,8 +71,19 @@ export default function RegistrationScreen() {
           <TouchableWithoutFeedback onPress={keyboardHide}>
             <View style={styles.formWrapper}>
               <View style={styles.avatarWrapper}>
-                <View style={styles.avatarFrame}></View>
-                <Image source={AddAvatarIcon} style={styles.addAvatarIcon} />
+                <View style={styles.avatarFrame}>
+                  {/* <Image source={Avatar} style={styles.avatar} /> */}
+                </View>
+                <TouchableOpacity onPress={addImage} activeOpacity={0.7}>
+                  {/* <View style={styles.logoutIconWrapper}> */}
+                  <EvilIcons
+                    name="plus"
+                    size={40}
+                    color="#FF6C00"
+                    style={styles.addAvatarIcon}
+                  />
+                  {/* </View> */}
+                </TouchableOpacity>
               </View>
               <Text style={styles.text}>Registration</Text>
               <View>
@@ -218,9 +217,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    transform: [{ translate: [12, -12] }],
-    width: 25,
-    height: 25,
+    transform: [{ translate: [20, -13] }],
   },
   text: {
     textAlign: "center",

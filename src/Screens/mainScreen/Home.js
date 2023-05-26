@@ -1,16 +1,13 @@
 import React from "react";
-
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
-import PostsScreen from "./mainScreen/PostsScreen";
-import CreatePostsScreen from "./mainScreen/CreatePostsScreen";
-import ProfileScreen from "./mainScreen/ProfileScreen";
+import PostsScreen from "./PostsScreen";
+import CreatePostsScreen from "./CreatePostsScreen";
+import ProfileScreen from "./ProfileScreen";
 
 import { Feather } from "@expo/vector-icons";
 
 const Tabs = createBottomTabNavigator();
-
-// const foo = ()
 
 export default function Home() {
   return (
@@ -48,7 +45,11 @@ export default function Home() {
       })}
     >
       <Tabs.Screen name="Posts" component={PostsScreen} />
-      <Tabs.Screen name="Create" component={CreatePostsScreen} />
+      <Tabs.Screen
+        name="Create"
+        component={CreatePostsScreen}
+        options={{ tabBarStyle: { display: "none" } }}
+      />
       <Tabs.Screen name="Profile" component={ProfileScreen} />
     </Tabs.Navigator>
   );

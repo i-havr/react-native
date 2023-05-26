@@ -1,24 +1,24 @@
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 
-import LogoutIcon from "../../../assets/icons/logout-icon.png";
+import { Feather } from "@expo/vector-icons";
+
 import Avatar from "../../../assets/images/avatar.png";
 
 export default function PostsScreen() {
+  const logOut = () => {
+    console.log("Click Log Out!");
+  };
   return (
     <View style={styles.container}>
       <View style={styles.headerWrapper}>
         <Text style={styles.text}>Publications</Text>
-        <Image source={LogoutIcon} style={styles.logoutIcon} />
+        <TouchableOpacity onPress={logOut} activeOpacity={0.7}>
+          <View style={styles.logoutIconWrapper}>
+            <Feather name="log-out" size={24} style={styles.logoutIcon} />
+          </View>
+        </TouchableOpacity>
       </View>
       <View style={styles.contentWrapper}>
-        <View style={styles.avatarWrapper}>
-          <Image source={Avatar} style={styles.avatar} />
-          <View style={styles.textWrapper}>
-            <Text style={styles.textName}>Natali Romanova</Text>
-            <Text style={styles.textEmail}>email@example.com</Text>
-          </View>
-        </View>
-
         <View style={styles.avatarWrapper}>
           <Image source={Avatar} style={styles.avatar} />
           <View style={styles.textWrapper}>
@@ -57,13 +57,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.408,
     color: "#212121",
   },
-  logoutIcon: {
+  logoutIconWrapper: {
     position: "absolute",
     right: 16,
-    top: "50%",
-    transform: [{ translate: [0, 0] }],
+    bottom: "50%",
+  },
+  logoutIcon: {
     width: 24,
     height: 24,
+    color: "#BDBDBD",
   },
   contentWrapper: {
     flex: 1,
