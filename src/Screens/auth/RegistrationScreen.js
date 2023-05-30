@@ -16,7 +16,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 
-import { EvilIcons } from "@expo/vector-icons";
+import { SimpleLineIcons } from "@expo/vector-icons";
 
 import bgImage from "../../../assets/images/bg.jpg";
 import Avatar from "../../../assets/images/avatar.png";
@@ -71,18 +71,14 @@ export default function RegistrationScreen() {
           <TouchableWithoutFeedback onPress={keyboardHide}>
             <View style={styles.formWrapper}>
               <View style={styles.avatarWrapper}>
-                <View style={styles.avatarFrame}>
-                  {/* <Image source={Avatar} style={styles.avatar} /> */}
-                </View>
+                <View style={styles.avatarFrame}></View>
                 <TouchableOpacity onPress={addImage} activeOpacity={0.7}>
-                  {/* <View style={styles.logoutIconWrapper}> */}
-                  <EvilIcons
+                  <SimpleLineIcons
                     name="plus"
-                    size={40}
+                    size={25}
                     color="#FF6C00"
                     style={styles.addAvatarIcon}
                   />
-                  {/* </View> */}
                 </TouchableOpacity>
               </View>
               <Text style={styles.text}>Registration</Text>
@@ -217,7 +213,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    transform: [{ translate: [20, -13] }],
+    transform: [{ translate: [12, -14] }],
   },
   text: {
     textAlign: "center",

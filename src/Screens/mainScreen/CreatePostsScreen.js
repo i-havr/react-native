@@ -1,133 +1,256 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+import { useIsFocused } from "@react-navigation/native";
+
+import { Metrics } from "react-native-safe-area-context";
 
 import {
   View,
   Text,
+  Image,
   TextInput,
   StyleSheet,
+  Keyboard,
+  Platform,
   KeyboardAvoidingView,
   TouchableOpacity,
+  TouchableWithoutFeedback,
 } from "react-native";
 
+import * as Location from "expo-location";
+
+import { Camera } from "expo-camera";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 
 const initialState = {
   title: "",
-  location: "",
+  locationTitle: "",
 };
 
 export default function CreatePostsScreen({ navigation }) {
   const [formData, setFormData] = useState(initialState);
 
-  const addImage = () => {
-    console.log("Click Add Image!");
+  const [location, setLocation] = useState(null);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [snap, setSnap] = useState(null);
+  const [photoUri, setPhotoUri] = useState("");
+
+  const isFocused = useIsFocused();
+
+  const { title, locationTitle } = formData;
+
+  const isSubmitButtonActive =
+    photoUri && title.length && locationTitle.length ? true : false;
+
+  const isDeleteButtonActive =
+    photoUri || title.length || locationTitle.length ? true : false;
+
+  useEffect(() => {
+    setPhotoUri("");
+    setLocation(null);
+
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    })();
+
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
+      }
+    })();
+  }, []);
+
+  if (hasPermission === null) {
+    return <View />;
+  }
+  if (hasPermission === false) {
+    return <Text>No access to camera</Text>;
+  }
+
+  const takePhoto = async () => {
+    if (snap) {
+      const photo = await snap.takePictureAsync();
+      setPhotoUri(photo.uri);
+
+      const location = await Location.getCurrentPositionAsync({});
+      const coords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      setLocation(coords);
+    }
   };
 
-  const handleSubmit = (event) => {
-    console.log("Click on the createPostButton");
-
-    const { title, location } = formData;
+  const handleSubmit = () => {
+    navigation.navigate("DefaultScreen", { photoUri, location, formData });
+    setPhotoUri("");
+    setLocation(null);
+    setFormData(initialState);
   };
 
-  const handleDelete = (event) => {
-    console.log("Click on the deleteButton");
+  const handleDelete = () => {
+    setPhotoUri("");
+    setLocation(null);
+    setFormData(initialState);
+  };
 
-    const { title, location } = formData;
+  const keyboardHide = () => {
+    Keyboard.dismiss();
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerWrapper}>
-        <Text style={styles.text}>Create a post</Text>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.goBack();
-          }}
-          activeOpacity={0.7}
-        >
-          <View style={styles.arrowWrapper}>
-            <Feather name="arrow-left" size={24} color="#BDBDBD" />
-          </View>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.contentWrapper}>
-        <View style={styles.imageFrame}>
-          <TouchableOpacity onPress={addImage} activeOpacity={0.7}>
-            <View style={styles.imageWrapper}>
-              <MaterialIcons
-                name="camera-alt"
-                size={24}
-                color="#BDBDBD"
-                style={styles.cameraIcon}
-              />
+    <TouchableWithoutFeedback onPress={keyboardHide}>
+      <View style={styles.container}>
+        <View style={styles.headerWrapper}>
+          <Text style={styles.text}>Create a post</Text>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.goBack();
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.arrowWrapper}>
+              <Feather name="arrow-left" size={24} color="#BDBDBD" />
             </View>
           </TouchableOpacity>
         </View>
-        <Text style={styles.uploadText}>Upload image</Text>
-        <View style={{ marginBottom: 24 }}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS == "ios" ? "padding" : "height"}
-          >
-            <View style={{ marginBottom: 0 }}>
-              <TextInput
-                style={styles.input}
-                onChangeText={(value) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    title: value,
-                  }))
-                }
-                value={formData.title}
-                placeholder="Title..."
-                keyboardType="default"
-                placeholderTextColor="#BDBDBD"
-              />
+        <View style={styles.contentWrapper}>
+          <View>
+            <View style={styles.cameraWrapper}>
+              <View style={styles.iconWrapper}>
+                {!photoUri ? (
+                  <TouchableOpacity onPress={takePhoto} activeOpacity={0.3}>
+                    <MaterialIcons
+                      name="camera-alt"
+                      size={24}
+                      color="#BDBDBD"
+                      style={styles.cameraIcon}
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setPhotoUri("")}
+                    activeOpacity={0.3}
+                  >
+                    <MaterialIcons
+                      name="autorenew"
+                      size={24}
+                      color="#BDBDBD"
+                      style={styles.cameraIcon}
+                    />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {photoUri.length ? (
+                <Image source={{ uri: photoUri }} style={styles.previewImage} />
+              ) : (
+                isFocused && (
+                  <Camera
+                    ref={setSnap}
+                    style={styles.camera}
+                    ratio="16:9"
+                    zoom={0}
+                    type={Camera.Constants.Type.back}
+                  ></Camera>
+                )
+              )}
             </View>
-            <View style={{ marginBottom: 0 }}>
-              <Feather
-                name="map-pin"
-                size={22}
-                color="#BDBDBD"
-                style={styles.mapPin}
-              />
-              <TextInput
+            <Text style={styles.uploadText}>Upload image</Text>
+            <KeyboardAvoidingView
+              style={{ marginBottom: 32 }}
+              behavior={Platform.OS == "ios" ? "padding" : "height"}
+            >
+              <View>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={(value) =>
+                    setFormData((prevState) => ({
+                      ...prevState,
+                      title: value,
+                    }))
+                  }
+                  value={formData.title}
+                  placeholder="Title..."
+                  keyboardType="default"
+                  placeholderTextColor="#BDBDBD"
+                />
+              </View>
+
+              <View>
+                <Feather
+                  name="map-pin"
+                  size={22}
+                  color="#BDBDBD"
+                  style={styles.mapPin}
+                />
+                <TextInput
+                  style={{
+                    ...styles.input,
+                    position: "relative",
+                    paddingLeft: 28,
+                    marginBottom: 0,
+                  }}
+                  onChangeText={(value) =>
+                    setFormData((prevState) => ({
+                      ...prevState,
+                      locationTitle: value,
+                    }))
+                  }
+                  value={formData.locationTitle}
+                  placeholder="Location..."
+                  keyboardType="default"
+                  placeholderTextColor="#BDBDBD"
+                />
+              </View>
+            </KeyboardAvoidingView>
+
+            <TouchableOpacity
+              onPress={handleSubmit}
+              disabled={isSubmitButtonActive ? false : true}
+              style={{
+                ...styles.createPostButton,
+                backgroundColor: isSubmitButtonActive ? "#FF6C00" : "#F6F6F6",
+              }}
+              activeOpacity={0.7}
+            >
+              <Text
                 style={{
-                  ...styles.input,
-                  position: "relative",
-                  paddingLeft: 28,
+                  ...styles.textBtn,
+                  color: isSubmitButtonActive ? "#FFFFFF" : "#BDBDBD",
                 }}
-                onChangeText={(value) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    location: value,
-                  }))
-                }
-                value={formData.location}
-                placeholder="Location..."
-                keyboardType="default"
-                placeholderTextColor="#BDBDBD"
+              >
+                Publish
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <KeyboardAvoidingView
+            style={{
+              marginBottom: 4,
+            }}
+            behavior="height"
+          >
+            <TouchableOpacity
+              disabled={isDeleteButtonActive ? false : true}
+              onPress={handleDelete}
+              style={{
+                ...styles.deleteButton,
+                backgroundColor: isDeleteButtonActive ? "#DC143C" : "#F6F6F6",
+              }}
+              activeOpacity={0.7}
+            >
+              <Feather
+                name="trash-2"
+                size={22}
+                color={isDeleteButtonActive ? "#FFFFFF" : "#BDBDBD"}
               />
-            </View>
+            </TouchableOpacity>
           </KeyboardAvoidingView>
         </View>
-
-        <TouchableOpacity
-          onPress={handleSubmit}
-          style={styles.createPostButton}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.textBtn}>Publish</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleDelete}
-          style={styles.deleteButton}
-          activeOpacity={0.7}
-        >
-          <Feather name="trash-2" size={22} color={"#BDBDBD"} />
-        </TouchableOpacity>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -166,29 +289,45 @@ const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,
     width: "100%",
-    justifyContent: "flex-start",
+    height: "100%",
+    justifyContent: "space-between",
     paddingTop: 32,
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingHorizontal: 16,
   },
-  imageFrame: {
-    width: "100%",
-    height: 240,
+  cameraWrapper: {
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 8,
+    width: "100%",
+    height: 240,
     marginBottom: 8,
+    overflow: "hidden",
+  },
+  camera: {
+    flex: 1,
+    width: "100%",
+    minHeight: "135%",
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "#F6F6F6",
     borderWidth: 1,
     borderColor: "#E8E8E8",
-    borderRadius: 8,
   },
-  imageWrapper: {
+  iconWrapper: {
+    position: "absolute",
     width: 60,
     height: 60,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: 30,
+    zIndex: 2,
+  },
+  previewImage: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    zIndex: 1,
   },
   uploadText: {
     marginBottom: 28,
@@ -207,15 +346,13 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto-Regular",
     fontStyle: "normal",
     fontSize: 16,
-    color: "#BDBDBD",
+    color: "#212121",
     lineHeight: 19,
   },
   createPostButton: {
     justifyContent: "center",
     alignItems: "center",
     height: 51,
-    marginBottom: 16,
-    backgroundColor: "#F6F6F6",
     borderRadius: 100,
   },
   textBtn: {
@@ -223,18 +360,14 @@ const styles = StyleSheet.create({
     fontStyle: "normal",
     fontSize: 16,
     lineHeight: 19,
-    color: "#BDBDBD",
   },
   deleteButton: {
     width: 70,
     height: 40,
-    marginTop: "auto",
-    marginBottom: 4,
-    marginLeft: "auto",
-    marginRight: "auto",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F6F6F6",
+    marginLeft: "auto",
+    marginRight: "auto",
     borderRadius: 20,
     opacity: 1,
   },

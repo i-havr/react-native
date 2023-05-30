@@ -284,7 +284,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   commentsIcon: {
-    width: 24,
+    width: 25,
+    height: 25,
     marginRight: 6,
   },
   commentsNumber: {

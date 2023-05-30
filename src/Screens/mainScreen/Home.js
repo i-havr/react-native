@@ -12,9 +12,11 @@ const Tabs = createBottomTabNavigator();
 export default function Home() {
   return (
     <Tabs.Navigator
+      id="home"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: false,
+        tabBarStyle: { display: "flex" },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
