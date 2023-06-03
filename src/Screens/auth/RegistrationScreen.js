@@ -23,14 +23,12 @@ import * as ImagePicker from "expo-image-picker";
 
 import { db, myStorage } from "../../firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
 
 import { resizeImage } from "../../helpers/resizeImage";
 
 import { register } from "../../redux/auth/authOperations";
 
 import bgImage from "../../../assets/images/bg.jpg";
-import Avatar from "../../../assets/images/avatar.png";
 
 const initialState = {
   login: "",
@@ -42,8 +40,6 @@ export default function RegistrationScreen() {
   const [formData, setFormData] = useState(initialState);
   const [avatarUri, setAvatarUri] = useState("");
   const [isHidePassword, setIsHidePassword] = useState(true);
-
-  // useEffect(() => {}, [formData.avatar]);
 
   const navigation = useNavigation();
   const dispatch = useDispatch();

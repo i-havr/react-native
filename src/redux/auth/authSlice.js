@@ -14,10 +14,11 @@ const authSlice = createSlice({
   reducers: {
     updateUserProfile: (state, { payload }) => ({
       ...state,
-      userId: payload.userId,
-      userEmail: payload.userEmail,
-      login: payload.login,
-      avatar: payload.avatar,
+      ...payload,
+      // userId: payload.userId,
+      // userEmail: payload.userEmail,
+      // login: payload.login,
+      // avatar: payload.avatar,
     }),
     authStateChange: (state, { payload }) => ({
       ...state,
