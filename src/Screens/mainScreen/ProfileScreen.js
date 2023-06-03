@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
-import { db } from "../../firebase/config";
+import { db, myStorage } from "../../firebase/config";
 import { collection, onSnapshot, where, query } from "firebase/firestore";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 import {
   StyleSheet,
@@ -11,13 +17,21 @@ import {
   Image,
   ImageBackground,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   FlatList,
 } from "react-native";
 
-import { useDispatch } from "react-redux";
+import authSlice from "../../redux/auth/authSlice";
+const { updateUserProfile } = authSlice.actions;
+
+import { SimpleLineIcons } from "@expo/vector-icons";
+
 import { logOut } from "../../redux/auth/authOperations";
 
 import { Feather } from "@expo/vector-icons";
+
+import * as ImagePicker from "expo-image-picker";
+import { resizeImage } from "../../helpers/resizeImage";
 
 import deleteAvatarIcon from "../../../assets/icons/cancel.png";
 import messageCircle from "../../../assets/icons/message-circle.png";
@@ -27,6 +41,8 @@ import { getRandomNumber } from "../../helpers/getRandomNumber";
 
 export default function ProfileScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
+  const [avatarUri, setAvatarUri] = useState("");
+  const [downloadURL, setDownloadURL] = useState(null);
 
   const dispatch = useDispatch();
   const { userId, avatar, login } = useSelector((state) => state.auth);
@@ -60,6 +76,58 @@ export default function ProfileScreen({ navigation }) {
     getPosts();
   }, []);
 
+  const handleChangeAvatar = async () => {
+    if (downloadURL) {
+      const avatarRef = ref(myStorage, downloadURL);
+      await deleteObject(avatarRef);
+      dispatch(updateUserProfile({ avatar: null }));
+      setAvatarUri("");
+      setDownloadURL(null);
+    } else {
+      if (avatarUri.length) {
+        setAvatarUri("");
+      } else {
+        try {
+          const avatar = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+            base64: true,
+          });
+
+          const uri = await resizeImage(avatar.assets[0].uri);
+          setAvatarUri(uri);
+        } catch (error) {
+          console.log("handleSelectAvatar: ", error);
+        }
+      }
+    }
+  };
+
+  const uploadAvatarToServer = async () => {
+    const uniquePostId = Date.now().toString();
+
+    if (avatarUri) {
+      try {
+        const response = await fetch(avatarUri);
+
+        const file = await response.blob();
+
+        const avatarRef = await ref(myStorage, `avatars/${uniquePostId}`);
+
+        await uploadBytes(avatarRef, file);
+
+        const downloadURL = await getDownloadURL(avatarRef);
+        setDownloadURL(downloadURL);
+        dispatch(updateUserProfile({ avatar: downloadURL }));
+        return downloadURL;
+      } catch (error) {
+        console.log(error.message);
+      }
+    }
+  };
+
   const userSignOut = () => {
     dispatch(logOut());
   };
@@ -72,8 +140,17 @@ export default function ProfileScreen({ navigation }) {
     console.log("Click LIKE Icon!");
   };
 
-  const changeAvatar = () => {
-    console.log("Click CHANGE AVATAR Icon!");
+  const showMap = (location) => {
+    console.log(location);
+    navigation.navigate("MapScreen", { location });
+  };
+
+  const showServerAvatar = () => {
+    if (avatar) {
+      return { uri: avatar };
+    } else {
+      return null;
+    }
   };
 
   return (
@@ -82,14 +159,47 @@ export default function ProfileScreen({ navigation }) {
         <View style={styles.contentWrapper}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarFrame}>
-              <Image source={{ uri: avatar }} style={styles.avatar} />
-            </View>
-            <TouchableOpacity onPress={changeAvatar} activeOpacity={0.7}>
               <Image
-                source={deleteAvatarIcon}
-                style={styles.changeAvatarIcon}
+                source={
+                  avatarUri.length ? { uri: avatarUri } : showServerAvatar()
+                }
+                style={styles.avatar}
               />
-            </TouchableOpacity>
+            </View>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <TouchableOpacity
+                onPress={handleChangeAvatar}
+                activeOpacity={0.7}
+              >
+                {avatarUri.length ? (
+                  <Image
+                    source={deleteAvatarIcon}
+                    style={styles.changeAvatarIcon}
+                  />
+                ) : (
+                  <SimpleLineIcons
+                    name="plus"
+                    size={25}
+                    color="#FF6C00"
+                    style={styles.addAvatarIcon}
+                  />
+                )}
+              </TouchableOpacity>
+            </TouchableWithoutFeedback>
+
+            {avatarUri && !downloadURL && (
+              <TouchableOpacity
+                onPress={uploadAvatarToServer}
+                activeOpacity={0.7}
+              >
+                <SimpleLineIcons
+                  name="check"
+                  size={45}
+                  color="#32cd32"
+                  style={styles.okIcon}
+                />
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.logoutIconWrapper}>
@@ -140,17 +250,22 @@ export default function ProfileScreen({ navigation }) {
                       </Text>
                     </View>
                   </View>
-                  <View style={styles.locationWrapper}>
-                    <Feather
-                      name="map-pin"
-                      size={20}
-                      color="#BDBDBD"
-                      style={styles.mapPin}
-                    />
-                    <Text style={styles.locationText}>
-                      {updateString(item.formData.locationTitle)}
-                    </Text>
-                  </View>
+                  <TouchableOpacity
+                    onPress={() => showMap(item.location)}
+                    activeOpacity={0.4}
+                  >
+                    <View style={styles.locationWrapper}>
+                      <Feather
+                        name="map-pin"
+                        size={20}
+                        color="#BDBDBD"
+                        style={styles.mapPin}
+                      />
+                      <Text style={styles.locationText}>
+                        {updateString(item.formData.locationTitle)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -210,6 +325,18 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     transform: [{ translate: [20, -10] }],
+  },
+  addAvatarIcon: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    transform: [{ translate: [12, -14] }],
+  },
+  okIcon: {
+    position: "absolute",
+    bottom: -30,
+    right: 100,
+    transform: [{ translate: [12, -14] }],
   },
   logoutIconWrapper: {
     position: "absolute",

@@ -1,14 +1,8 @@
-import { app, auth } from "../../firebase/config";
+import { auth } from "../../firebase/config";
 
-import {
-  getAuth,
-  setPersistence,
-  onAuthStateChanged,
-  browserLocalPersistence,
-} from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 
 import authSlice from "./authSlice";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { updateUserProfile, authStateChange, authLogOut } = authSlice.actions;
 
