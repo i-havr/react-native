@@ -14,14 +14,14 @@ import {
 import { useDispatch } from "react-redux";
 
 import { db } from "../../firebase/config";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, where, query } from "firebase/firestore";
 
 import { logOut } from "../../redux/auth/authOperations";
 
 import { Feather } from "@expo/vector-icons";
-import Avatar from "../../../assets/images/avatar.png";
 import messageCircle from "../../../assets/icons/message-circle.png";
 import { updateString } from "../../helpers/updateString";
+import { getRandomNumber } from "../../helpers/getRandomNumber";
 
 export default function DefaultScreenPosts({ route, navigation }) {
   const [posts, setPosts] = useState([]);
@@ -40,18 +40,25 @@ export default function DefaultScreenPosts({ route, navigation }) {
       });
 
     const getPosts = async () => {
-      const database = await collection(db, "posts");
+      try {
+        const database = await query(
+          collection(db, "posts"),
+          where("userId", "==", userId)
+        );
 
-      onSnapshot(
-        database,
-        (data) => {
-          const sortedData = data.docs
-            .map((doc) => ({ id: doc.id, ...doc.data() }))
-            .sort((a, b) => b.createdAt - a.createdAt);
-          setPosts(sortedData);
-        },
-        () => {}
-      );
+        onSnapshot(
+          database,
+          (data) => {
+            const sortedData = data.docs
+              .map((doc) => ({ id: doc.id, ...doc.data() }))
+              .sort((a, b) => b.createdAt - a.createdAt);
+            setPosts(sortedData);
+          },
+          () => {}
+        );
+      } catch (error) {
+        console.log("getPosts: ", error);
+      }
     };
     getPosts();
   }, [isFocused]);
@@ -126,7 +133,7 @@ export default function DefaultScreenPosts({ route, navigation }) {
                         style={styles.likesIcon}
                       />
                     </TouchableOpacity>
-                    <Text style={styles.likesNumber}>500</Text>
+                    <Text style={styles.likesNumber}>{getRandomNumber()}</Text>
                   </View>
                 </View>
                 <TouchableOpacity
@@ -233,10 +240,10 @@ const styles = StyleSheet.create({
   imageWrapper: {
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 8,
     width: "100%",
     height: 240,
     marginBottom: 8,
+    borderRadius: 8,
     overflow: "hidden",
   },
   postImage: {

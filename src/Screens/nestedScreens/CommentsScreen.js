@@ -60,6 +60,8 @@ export default function CommentsScreen({ route, navigation }) {
       });
     }
 
+    getPostOwner();
+
     const getComments = async () => {
       const commentsDB = await collection(db, "posts", postId, "comments");
 
@@ -102,7 +104,6 @@ export default function CommentsScreen({ route, navigation }) {
 
   const handleSubmitComment = () => {
     uploadCommentToServer();
-    getPostOwner();
     keyboardHide();
     setCommentText("");
   };

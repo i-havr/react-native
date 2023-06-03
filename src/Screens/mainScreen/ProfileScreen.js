@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 
-import { useNavigation } from "@react-navigation/native";
+import { db } from "../../firebase/config";
+import { collection, onSnapshot, where, query } from "firebase/firestore";
 
 import {
   StyleSheet,
@@ -9,7 +11,7 @@ import {
   Image,
   ImageBackground,
   TouchableOpacity,
-  Keyboard,
+  FlatList,
 } from "react-native";
 
 import { useDispatch } from "react-redux";
@@ -20,156 +22,139 @@ import { Feather } from "@expo/vector-icons";
 import deleteAvatarIcon from "../../../assets/icons/cancel.png";
 import messageCircle from "../../../assets/icons/message-circle.png";
 import bgImage from "../../../assets/images/bg.jpg";
-import postImage from "../../../assets/images/img_forest.png";
-import Avatar from "../../../assets/images/avatar.png";
+import { updateString } from "../../helpers/updateString";
+import { getRandomNumber } from "../../helpers/getRandomNumber";
 
-const initialState = {
-  login: "",
-  email: "",
-  password: "",
-};
-
-export default function ProfileScreen() {
-  const [formData, setFormData] = useState(initialState);
-  const [isHidePassword, setIsHidePassword] = useState(true);
-  const navigation = useNavigation();
+export default function ProfileScreen({ navigation }) {
+  const [posts, setPosts] = useState([]);
 
   const dispatch = useDispatch();
+  const { userId, avatar, login } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    const getPosts = async () => {
+      try {
+        const database = await query(
+          collection(db, "posts"),
+          where("userId", "==", userId)
+        );
+
+        onSnapshot(
+          database,
+          (data) => {
+            const sortedData = data.docs
+              .map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              }))
+              .sort((a, b) => b.createdAt - a.createdAt);
+            setPosts(sortedData);
+          },
+          () => {}
+        );
+      } catch (error) {
+        console.log("getPosts: ", error);
+      }
+    };
+
+    getPosts();
+  }, []);
 
   const userSignOut = () => {
     dispatch(logOut());
   };
 
-  const comment = () => {
-    console.log("Click COMMENT Icon!");
+  const comment = (postId, downloadURL) => {
+    navigation.navigate("CommentsScreen", { postId, downloadURL });
   };
 
   const like = () => {
     console.log("Click LIKE Icon!");
   };
 
-  const deleteImage = () => {
-    console.log("Click DELETE IMAGE Icon!");
+  const changeAvatar = () => {
+    console.log("Click CHANGE AVATAR Icon!");
   };
 
-  const handleSubmit = () => {
-    const { login, email, password } = formData;
-
-    if (
-      login.trim().length === 0 ||
-      email.trim().length === 0 ||
-      password.trim().length === 0
-    ) {
-      console.log("All fields are required!");
-      return;
-    }
-
-    const normalizedFormData = {
-      login: login.trim(),
-      email: email.trim().toLowerCase(),
-      password: password.trim(),
-    };
-
-    Keyboard.dismiss();
-    setFormData(initialState);
-    navigation.navigate("Home");
-    console.log(normalizedFormData, "Register data has been sent");
-  };
-
-  const keyboardHide = () => {
-    Keyboard.dismiss();
-  };
   return (
     <View style={styles.container}>
       <ImageBackground source={bgImage} style={styles.bgImage}>
         <View style={styles.contentWrapper}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarFrame}>
-              <Image source={Avatar} style={styles.avatar} />
+              <Image source={{ uri: avatar }} style={styles.avatar} />
             </View>
-            <TouchableOpacity onPress={deleteImage} activeOpacity={0.7}>
-              <Image source={deleteAvatarIcon} style={styles.addAvatarIcon} />
+            <TouchableOpacity onPress={changeAvatar} activeOpacity={0.7}>
+              <Image
+                source={deleteAvatarIcon}
+                style={styles.changeAvatarIcon}
+              />
             </TouchableOpacity>
           </View>
+
           <View style={styles.logoutIconWrapper}>
             <TouchableOpacity onPress={userSignOut} activeOpacity={0.7}>
               <Feather name="log-out" size={22} style={styles.logoutIcon} />
             </TouchableOpacity>
           </View>
-          <Text style={styles.text}>Natali Romanova</Text>
-          <View style={styles.postWrapper}>
-            <View style={styles.imageWrapper}>
-              <Image source={postImage} style={styles.postImage} />
-            </View>
-            <Text style={styles.postTitle}>Forest</Text>
-            <View style={styles.postDetails}>
-              <View style={styles.reactionWrapper}>
-                <View style={styles.commentsWrapper}>
-                  <TouchableOpacity onPress={comment} activeOpacity={0.7}>
-                    <Image source={messageCircle} style={styles.commentsIcon} />
-                  </TouchableOpacity>
-                  <Text style={styles.commentsNumber}>5</Text>
-                </View>
-                <View style={styles.likesWrapper}>
-                  <TouchableOpacity onPress={like} activeOpacity={0.7}>
-                    <Feather
-                      name="thumbs-up"
-                      size={20}
-                      color="#FF6C00"
-                      style={styles.likesIcon}
-                    />
-                  </TouchableOpacity>
-                  <Text style={styles.likesNumber}>500</Text>
-                </View>
-              </View>
-              <View style={styles.locationWrapper}>
-                <Feather
-                  name="map-pin"
-                  size={20}
-                  color="#BDBDBD"
-                  style={styles.mapPin}
-                />
-                <Text style={styles.locationText}>Karpaty</Text>
-              </View>
-            </View>
-          </View>
 
-          <View style={styles.postWrapper}>
-            <View style={styles.imageWrapper}>
-              <Image source={postImage} style={styles.postImage} />
-            </View>
-            <Text style={styles.postTitle}>Forest</Text>
-            <View style={styles.postDetails}>
-              <View style={styles.reactionWrapper}>
-                <View style={styles.commentsWrapper}>
-                  <TouchableOpacity onPress={comment} activeOpacity={0.7}>
-                    <Image source={messageCircle} style={styles.commentsIcon} />
-                  </TouchableOpacity>
-                  <Text style={styles.commentsNumber}>5</Text>
+          <Text style={styles.text}>{login}</Text>
+
+          <FlatList
+            data={posts}
+            keyExtractor={({ id }) => id}
+            renderItem={({ item }) => (
+              <View style={styles.postWrapper}>
+                <View style={styles.imageWrapper}>
+                  <Image
+                    source={{ uri: item.downloadURL }}
+                    style={styles.postImage}
+                  />
                 </View>
-                <View style={styles.likesWrapper}>
-                  <TouchableOpacity onPress={logOut} activeOpacity={0.7}>
+                <Text style={styles.postTitle}>{item.formData.title}</Text>
+                <View style={styles.postDetails}>
+                  <View style={styles.reactionWrapper}>
+                    <View style={styles.commentsWrapper}>
+                      <TouchableOpacity
+                        onPress={() => comment(item.id, item.downloadURL)}
+                        activeOpacity={0.7}
+                      >
+                        <Image
+                          source={messageCircle}
+                          style={styles.commentsIcon}
+                        />
+                      </TouchableOpacity>
+                      <Text style={styles.commentsNumber}>10</Text>
+                    </View>
+                    <View style={styles.likesWrapper}>
+                      <TouchableOpacity onPress={like} activeOpacity={0.7}>
+                        <Feather
+                          name="thumbs-up"
+                          size={20}
+                          color="#FF6C00"
+                          style={styles.likesIcon}
+                        />
+                      </TouchableOpacity>
+                      <Text style={styles.likesNumber}>
+                        {getRandomNumber()}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.locationWrapper}>
                     <Feather
-                      name="thumbs-up"
+                      name="map-pin"
                       size={20}
-                      color="#FF6C00"
-                      style={styles.likesIcon}
+                      color="#BDBDBD"
+                      style={styles.mapPin}
                     />
-                  </TouchableOpacity>
-                  <Text style={styles.likesNumber}>500</Text>
+                    <Text style={styles.locationText}>
+                      {updateString(item.formData.locationTitle)}
+                    </Text>
+                  </View>
                 </View>
               </View>
-              <View style={styles.locationWrapper}>
-                <Feather
-                  name="map-pin"
-                  size={20}
-                  color="#BDBDBD"
-                  style={styles.mapPin}
-                />
-                <Text style={styles.locationText}>Karpaty</Text>
-              </View>
-            </View>
-          </View>
+            )}
+          />
         </View>
       </ImageBackground>
     </View>
@@ -183,13 +168,11 @@ const styles = StyleSheet.create({
   },
   bgImage: {
     flex: 1,
-    justifyContent: "flex-start",
-    paddingTop: 147,
-    resizeMode: "cover",
   },
   contentWrapper: {
     position: "relative",
-    minHeight: "100%",
+    flex: 1,
+    marginTop: 147,
     paddingTop: 92,
     paddingLeft: 16,
     paddingRight: 16,
@@ -222,7 +205,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.1 }],
     resizeMode: "cover",
   },
-  addAvatarIcon: {
+  changeAvatarIcon: {
     position: "absolute",
     bottom: 0,
     right: 0,
@@ -252,21 +235,24 @@ const styles = StyleSheet.create({
     color: "#212121",
   },
   postWrapper: {
-    width: "100%",
-    height: 240,
-    marginBottom: "25%",
-    backgroundColor: "#F6F6F6",
+    justifyContent: "flex-start",
+    marginBottom: 35,
+    borderRadius: 8,
+    // backgroundColor: "#F6F6F6",
+    overflow: "hidden",
   },
   imageWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
     width: "100%",
-    height: "100%",
+    height: 240,
     marginBottom: 8,
     borderRadius: 8,
     overflow: "hidden",
   },
   postImage: {
     width: "100%",
-    resizeMode: "cover",
+    height: "100%",
   },
   postTitle: {
     marginBottom: 8,
