@@ -1,6 +1,5 @@
 import React from "react";
 
-import {} from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 
 import DefaultScreenPosts from "../nestedScreens/DefaultScreenPosts";

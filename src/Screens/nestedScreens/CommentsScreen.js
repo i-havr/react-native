@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 
 import { useIsFocused } from "@react-navigation/native";
 
@@ -9,19 +10,48 @@ import {
   TextInput,
   StyleSheet,
   Keyboard,
+  FlatList,
   Platform,
   KeyboardAvoidingView,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Dimensions,
 } from "react-native";
+
+import { db } from "../../firebase/config";
+import { collection, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, Timestamp } from "firebase/firestore";
 
 import { Feather } from "@expo/vector-icons";
 
+import { convertDateFormat } from "../../helpers/convertDateFormat";
+
 export default function CommentsScreen({ route, navigation }) {
   const [commentText, setCommentText] = useState("");
-  const [photoUri, setPhotoUri] = useState(() => route.params.photoUri);
+  const [comments, setComments] = useState([]);
+  const [isPostOwner, setIsPostOwner] = useState(false);
+
+  const { userId, avatar } = useSelector((state) => state.auth);
 
   const isFocused = useIsFocused();
+
+  const { postId, downloadURL } = route.params;
+
+  const getPostOwner = async () => {
+    try {
+      const postsRef = await collection(db, "posts");
+
+      onSnapshot(postsRef, (data) => {
+        setIsPostOwner(
+          data.docs.some(async (post) => {
+            (await post.data().userId) === userId;
+          })
+        );
+      });
+    } catch (error) {
+      console.log("getPostOwner", error);
+    }
+  };
 
   useEffect(() => {
     if (isFocused) {
@@ -29,10 +59,51 @@ export default function CommentsScreen({ route, navigation }) {
         tabBarStyle: { display: "none" },
       });
     }
+
+    const getComments = async () => {
+      const commentsDB = await collection(db, "posts", postId, "comments");
+
+      onSnapshot(
+        commentsDB,
+        (data) => {
+          setComments(
+            data.docs.map((comment) => ({ id: comment.id, ...comment.data() }))
+          );
+        },
+        () => {}
+      );
+    };
+    getComments();
   }, []);
 
+  const uploadCommentToServer = async () => {
+    const uniqueCommentId = Date.now().toString();
+
+    try {
+      const createComment = doc(
+        db,
+        "posts",
+        postId,
+        "comments",
+        uniqueCommentId
+      );
+
+      await setDoc(createComment, {
+        message: commentText,
+        avatar,
+        userId,
+        createdAt: Timestamp.fromDate(new Date()),
+        updatedAt: Timestamp.fromDate(new Date()),
+      });
+    } catch (error) {
+      console.log("uploadCommentToServer", error);
+    }
+  };
+
   const handleSubmitComment = () => {
-    console.log("The message has been sent: ", commentText);
+    uploadCommentToServer();
+    getPostOwner();
+    keyboardHide();
     setCommentText("");
   };
 
@@ -58,43 +129,68 @@ export default function CommentsScreen({ route, navigation }) {
         </View>
         <View style={styles.contentWrapper}>
           <View style={styles.imageWrapper}>
-            <Image source={{ uri: photoUri }} style={styles.postImage} />
+            <Image source={{ uri: downloadURL }} style={styles.postImage} />
           </View>
-          <View style={styles.comments}>
-            <View style={styles.commentWrapper}></View>
-          </View>
-          <KeyboardAvoidingView
-            style={styles.inputWrapper}
-            behavior={Platform.OS == "ios" ? "padding" : "height"}
-          >
-            <View>
-              <TextInput
-                style={styles.input}
-                onChangeText={(value) => setCommentText(value)}
-                value={commentText}
-                placeholder="Comment..."
-                keyboardType="default"
-                placeholderTextColor="#BDBDBD"
-              />
-              <TouchableOpacity
-                onPress={handleSubmitComment}
-                disabled={commentText.length ? false : true}
-                activeOpacity={0.7}
-                style={styles.iconWrapper}
-              >
-                <Feather
-                  name="arrow-up"
-                  size={22}
-                  color="#FFFFFF"
+
+          <FlatList
+            data={comments}
+            keyExtractor={({ id }) => id}
+            renderItem={({ item }) => (
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View
                   style={{
-                    ...styles.inputIcon,
-                    backgroundColor: commentText.length ? "#FF6C00" : "#BDBDBD",
+                    ...styles.commentWrapper,
+                    flexDirection: isPostOwner ? "row-reverse" : "row",
                   }}
-                />
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
+                >
+                  <View style={styles.avatarWrapper}>
+                    <Image
+                      source={{ uri: item.avatar }}
+                      style={styles.commentAvatar}
+                    />
+                  </View>
+                  <View style={styles.commentMessageWrapper}>
+                    <Text style={styles.commentMessage}>{item.message}</Text>
+                    <Text style={styles.commentCreatedAt}>
+                      {convertDateFormat(item.createdAt.seconds)}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            )}
+          />
         </View>
+        <KeyboardAvoidingView
+          style={styles.inputWrapper}
+          behavior={Platform.OS == "ios" ? "padding" : "height"}
+        >
+          <View>
+            <TextInput
+              style={styles.input}
+              onChangeText={(value) => setCommentText(value)}
+              value={commentText}
+              placeholder="Comment..."
+              keyboardType="default"
+              placeholderTextColor="#BDBDBD"
+            />
+            <TouchableOpacity
+              onPress={handleSubmitComment}
+              disabled={commentText.length ? false : true}
+              activeOpacity={0.7}
+              style={styles.iconWrapper}
+            >
+              <Feather
+                name="arrow-up"
+                size={22}
+                color="#FFFFFF"
+                style={{
+                  ...styles.inputIcon,
+                  backgroundColor: commentText.length ? "#FF6C00" : "#BDBDBD",
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </TouchableWithoutFeedback>
   );
@@ -133,32 +229,71 @@ const styles = StyleSheet.create({
     transform: [{ translate: [0, 3] }],
   },
   contentWrapper: {
-    // backgroundColor: "red",
     flex: 1,
     width: "100%",
-    height: "100%",
     justifyContent: "flex-start",
-    paddingTop: 32,
+    paddingVertical: 32,
     paddingHorizontal: 16,
   },
   imageWrapper: {
-    backgroundColor: "blue",
     width: "100%",
     height: 240,
     marginBottom: 32,
     borderRadius: 8,
+    backgroundColor: "#BDBDBD",
     overflow: "hidden",
   },
   postImage: {
     flex: 1,
+  },
+  comments: {
+    width: "100%",
+  },
+  commentWrapper: {
+    width: "100%",
+    gap: 16,
+    marginBottom: 24,
+  },
+  avatarWrapper: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#BDBDBD",
+    overflow: "hidden",
+  },
+  commentAvatar: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 14,
     resizeMode: "cover",
   },
+  commentMessageWrapper: {
+    backgroundColor: "rgba(0, 0, 0, 0.03)",
+    width: Dimensions.get("window").width - 76,
+    padding: 16,
+    borderTopRightRadius: 6,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  commentMessage: {
+    marginBottom: 8,
+    fontFamily: "Roboto-Regular",
+    fontStyle: "normal",
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#212121",
+  },
+  commentCreatedAt: {
+    textAlign: "right",
+    fontFamily: "Roboto-Regular",
+    fontStyle: "normal",
+    fontSize: 10,
+    color: "#BDBDBD",
+  },
   inputWrapper: {
-    position: "absolute",
     flexDirection: "row",
     bottom: 16,
-    left: 16,
-    width: "100%",
+    width: Dimensions.get("window").width - 32,
     height: 50,
     paddingLeft: 16,
     paddingRight: 56,
@@ -188,7 +323,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textAlignVertical: "center",
     transform: [{ translate: [48, 7] }],
-    backgroundColor: "#FF6C00",
     borderRadius: 17,
     zIndex: 1,
   },

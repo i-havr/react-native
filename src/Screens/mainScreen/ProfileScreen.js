@@ -12,6 +12,9 @@ import {
   Keyboard,
 } from "react-native";
 
+import { useDispatch } from "react-redux";
+import { logOut } from "../../redux/auth/authOperations";
+
 import { Feather } from "@expo/vector-icons";
 
 import deleteAvatarIcon from "../../../assets/icons/cancel.png";
@@ -31,8 +34,10 @@ export default function ProfileScreen() {
   const [isHidePassword, setIsHidePassword] = useState(true);
   const navigation = useNavigation();
 
-  const logOut = () => {
-    console.log("Click LOG OUT!");
+  const dispatch = useDispatch();
+
+  const userSignOut = () => {
+    dispatch(logOut());
   };
 
   const comment = () => {
@@ -87,7 +92,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.logoutIconWrapper}>
-            <TouchableOpacity onPress={logOut} activeOpacity={0.7}>
+            <TouchableOpacity onPress={userSignOut} activeOpacity={0.7}>
               <Feather name="log-out" size={22} style={styles.logoutIcon} />
             </TouchableOpacity>
           </View>

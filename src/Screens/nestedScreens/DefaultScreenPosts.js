@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react/cjs/react.development";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+
 import { useIsFocused } from "@react-navigation/native";
 import {
   View,
@@ -9,6 +11,13 @@ import {
   FlatList,
 } from "react-native";
 
+import { useDispatch } from "react-redux";
+
+import { db } from "../../firebase/config";
+import { collection, onSnapshot } from "firebase/firestore";
+
+import { logOut } from "../../redux/auth/authOperations";
+
 import { Feather } from "@expo/vector-icons";
 import Avatar from "../../../assets/images/avatar.png";
 import messageCircle from "../../../assets/icons/message-circle.png";
@@ -16,7 +25,11 @@ import { updateString } from "../../helpers/updateString";
 
 export default function DefaultScreenPosts({ route, navigation }) {
   const [posts, setPosts] = useState([]);
-  const [isFirstRender, setIsFirstRender] = useState(true);
+  const dispatch = useDispatch();
+
+  const { userId, login, userEmail, avatar } = useSelector(
+    (state) => state.auth
+  );
 
   const isFocused = useIsFocused();
 
@@ -25,26 +38,30 @@ export default function DefaultScreenPosts({ route, navigation }) {
       navigation?.getParent("home")?.setOptions({
         tabBarStyle: { display: "flex" },
       });
+
+    const getPosts = async () => {
+      const database = await collection(db, "posts");
+
+      onSnapshot(
+        database,
+        (data) => {
+          const sortedData = data.docs
+            .map((doc) => ({ id: doc.id, ...doc.data() }))
+            .sort((a, b) => b.createdAt - a.createdAt);
+          setPosts(sortedData);
+        },
+        () => {}
+      );
+    };
+    getPosts();
   }, [isFocused]);
 
-  useEffect(() => {
-    if (isFirstRender) {
-      setIsFirstRender(false);
-      return;
-    }
-
-    if (route.params) {
-      setPosts((prevState) => [route.params, ...prevState]);
-      route.params = null;
-    }
-  }, [route.params]);
-
-  const logOut = () => {
-    console.log("Click Log Out!");
+  const userSignOut = () => {
+    dispatch(logOut());
   };
 
-  const comment = (photoUri) => {
-    navigation.navigate("CommentsScreen", { photoUri });
+  const comment = (postId, downloadURL) => {
+    navigation.navigate("CommentsScreen", { postId, downloadURL });
   };
 
   const like = () => {
@@ -52,7 +69,6 @@ export default function DefaultScreenPosts({ route, navigation }) {
   };
 
   const showMap = (location) => {
-    console.log("Click SHOW MAP!");
     navigation.navigate("MapScreen", { location });
   };
 
@@ -60,7 +76,7 @@ export default function DefaultScreenPosts({ route, navigation }) {
     <View style={styles.container}>
       <View style={styles.headerWrapper}>
         <Text style={styles.text}>Publications</Text>
-        <TouchableOpacity onPress={logOut} activeOpacity={0.7}>
+        <TouchableOpacity onPress={userSignOut} activeOpacity={0.7}>
           <View style={styles.logoutIconWrapper}>
             <Feather name="log-out" size={22} style={styles.logoutIcon} />
           </View>
@@ -68,21 +84,21 @@ export default function DefaultScreenPosts({ route, navigation }) {
       </View>
       <View style={styles.contentWrapper}>
         <View style={styles.avatarWrapper}>
-          <Image source={Avatar} style={styles.avatar} />
+          <Image source={{ uri: avatar }} style={styles.avatar} />
           <View style={styles.textWrapper}>
-            <Text style={styles.textName}>Natali Romanova</Text>
-            <Text style={styles.textEmail}>email@example.com</Text>
+            <Text style={styles.textName}>{login}</Text>
+            <Text style={styles.textEmail}>{userEmail}</Text>
           </View>
         </View>
 
         <FlatList
           data={posts}
-          keyExtractor={(post, index) => index.toString()}
+          keyExtractor={({ id }) => id}
           renderItem={({ item }) => (
             <View style={styles.postWrapper}>
               <View style={styles.imageWrapper}>
                 <Image
-                  source={{ uri: item.photoUri }}
+                  source={{ uri: item.downloadURL }}
                   style={styles.postImage}
                 />
               </View>
@@ -91,7 +107,7 @@ export default function DefaultScreenPosts({ route, navigation }) {
                 <View style={styles.reactionWrapper}>
                   <View style={styles.commentsWrapper}>
                     <TouchableOpacity
-                      onPress={() => comment(item.photoUri)}
+                      onPress={() => comment(item.id, item.downloadURL)}
                       activeOpacity={0.7}
                     >
                       <Image
@@ -191,6 +207,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     marginRight: 8,
+    borderRadius: 16,
   },
   textWrapper: {
     justifyContent: "center",

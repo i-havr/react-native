@@ -37,7 +37,7 @@ export default function MapScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.headerWrapper}>
-        <Text style={styles.text}>Where the photo was taken</Text>
+        <Text style={styles.text}>Where the photo was taken or uploaded</Text>
         <TouchableOpacity
           onPress={() => {
             navigation.goBack();

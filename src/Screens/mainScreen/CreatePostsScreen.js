@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-
+import { useSelector } from "react-redux";
 import { useIsFocused } from "@react-navigation/native";
-
-import { Metrics } from "react-native-safe-area-context";
 
 import {
   View,
@@ -18,9 +16,15 @@ import {
 } from "react-native";
 
 import * as Location from "expo-location";
+import * as ImagePicker from "expo-image-picker";
+
+import { db, myStorage } from "../../firebase/config";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, setDoc, Timestamp } from "firebase/firestore";
 
 import { Camera } from "expo-camera";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { resizeImage } from "../../helpers/resizeImage";
 
 const initialState = {
   title: "",
@@ -34,6 +38,8 @@ export default function CreatePostsScreen({ navigation }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [snap, setSnap] = useState(null);
   const [photoUri, setPhotoUri] = useState("");
+
+  const { userId, login } = useSelector((state) => state.auth);
 
   const isFocused = useIsFocused();
 
@@ -70,9 +76,39 @@ export default function CreatePostsScreen({ navigation }) {
   }
 
   const takePhoto = async () => {
-    if (snap) {
-      const photo = await snap.takePictureAsync();
-      setPhotoUri(photo.uri);
+    try {
+      if (snap) {
+        const photo = await snap.takePictureAsync();
+
+        const uri = await resizeImage(photo.uri);
+
+        setPhotoUri(uri);
+
+        const location = await Location.getCurrentPositionAsync({});
+        const coords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        setLocation(coords);
+      }
+    } catch (error) {
+      console.log("takePhoto: ", error);
+    }
+  };
+
+  const handleSelectPhoto = async () => {
+    try {
+      const photo = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [3, 2],
+        quality: 1,
+        base64: true,
+      });
+
+      const uri = await resizeImage(photo.assets[0].uri);
+
+      setPhotoUri(uri);
 
       const location = await Location.getCurrentPositionAsync({});
       const coords = {
@@ -80,11 +116,59 @@ export default function CreatePostsScreen({ navigation }) {
         longitude: location.coords.longitude,
       };
       setLocation(coords);
+    } catch (error) {
+      console.log("handleSelectPhoto: ", error);
+    }
+  };
+
+  const uploadPhotoToServer = async () => {
+    const uniquePostId = Date.now().toString();
+
+    try {
+      const response = await fetch(photoUri);
+
+      const file = await response.blob();
+
+      const photoRef = await ref(myStorage, `postImages/${uniquePostId}`);
+
+      await uploadBytes(photoRef, file);
+
+      const downloadURL = await getDownloadURL(photoRef);
+      return downloadURL;
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const uploadPostToServer = async () => {
+    const uniquePostId = Date.now().toString();
+
+    try {
+      const downloadURL = await uploadPhotoToServer();
+
+      const createPost = doc(db, "posts", uniquePostId);
+
+      await setDoc(createPost, {
+        downloadURL,
+        userId,
+        login,
+        formData,
+        location,
+        createdAt: Timestamp.fromDate(new Date()),
+        updatedAt: Timestamp.fromDate(new Date()),
+      });
+    } catch (error) {
+      console.log("uploadPostToServer: ", error.message);
     }
   };
 
   const handleSubmit = () => {
-    navigation.navigate("DefaultScreen", { photoUri, location, formData });
+    uploadPostToServer();
+    navigation.navigate("DefaultScreen", {
+      photoUri,
+      location,
+      formData,
+    });
     setPhotoUri("");
     setLocation(null);
     setFormData(initialState);
@@ -151,14 +235,16 @@ export default function CreatePostsScreen({ navigation }) {
                   <Camera
                     ref={setSnap}
                     style={styles.camera}
-                    ratio="16:9"
+                    ratio="1:1"
                     zoom={0}
                     type={Camera.Constants.Type.back}
                   ></Camera>
                 )
               )}
             </View>
-            <Text style={styles.uploadText}>Upload image</Text>
+            <TouchableOpacity onPress={handleSelectPhoto} activeOpacity={0.3}>
+              <Text style={styles.uploadText}>Upload image</Text>
+            </TouchableOpacity>
             <KeyboardAvoidingView
               style={{ marginBottom: 32 }}
               behavior={Platform.OS == "ios" ? "padding" : "height"}
@@ -304,9 +390,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   camera: {
+    position: "absolute",
+    top: 0,
     flex: 1,
     width: "100%",
-    minHeight: "135%",
+    height: "154%",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F6F6F6",
@@ -325,6 +413,7 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     position: "absolute",
+    top: 0,
     width: "100%",
     height: "100%",
     zIndex: 1,

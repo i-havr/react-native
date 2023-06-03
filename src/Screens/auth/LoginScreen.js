@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 
+import { useDispatch } from "react-redux";
+
+import { login } from "../../redux/auth/authOperations";
+
 import {
   StyleSheet,
   Text,
@@ -24,12 +28,11 @@ const initialState = {
 export default function LoginScreen() {
   const [formData, setFormData] = useState(initialState);
   const [isHidePassword, setIsHidePassword] = useState(true);
+
   const navigation = useNavigation();
-  // const [isShowKeyboard, setIsShowKeyboard] = useState(false);
+  const dispatch = useDispatch();
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
+  const handleSubmit = () => {
     const { email, password } = formData;
 
     if (email.trim().length === 0 || password.trim().length === 0) {
@@ -43,30 +46,13 @@ export default function LoginScreen() {
     };
 
     Keyboard.dismiss();
+    dispatch(login(normalizedFormData));
     setFormData(initialState);
-    navigation.navigate("Home");
-    console.log(normalizedFormData, "Login data has been sent");
   };
-
-  // const keyboardDidHideCallback = () => {
-  //   setIsShowKeyboard(false);
-  // };
 
   const keyboardHide = () => {
-    // setIsShowKeyboard(false);
     Keyboard.dismiss();
   };
-
-  // useEffect(() => {
-  //   const keyboardDidHide = Keyboard.addListener(
-  //     "keyboardDidHide",
-  //     keyboardDidHideCallback
-  //   );
-
-  //   return () => {
-  //     keyboardDidHide?.remove();
-  //   };
-  // });
 
   return (
     <View style={styles.container}>
@@ -91,9 +77,6 @@ export default function LoginScreen() {
                     placeholder="Email"
                     keyboardType="email-address"
                     placeholderTextColor="#BDBDBD"
-                    // onFocus={() => {
-                    //   setIsShowKeyboard(true);
-                    // }}
                   />
                 </View>
                 <View style={{ position: "relative" }}>
