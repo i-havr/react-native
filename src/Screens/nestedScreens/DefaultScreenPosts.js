@@ -25,6 +25,7 @@ import { getRandomNumber } from "../../helpers/getRandomNumber";
 
 export default function DefaultScreenPosts({ route, navigation }) {
   const [posts, setPosts] = useState([]);
+  const [avatarUri, setAvatarUri] = useState("");
   const dispatch = useDispatch();
 
   const { userId, login, userEmail, avatar } = useSelector(
@@ -38,6 +39,8 @@ export default function DefaultScreenPosts({ route, navigation }) {
       navigation?.getParent("home")?.setOptions({
         tabBarStyle: { display: "flex" },
       });
+
+    setAvatarUri(avatar);
 
     const getPosts = async () => {
       try {
@@ -91,7 +94,10 @@ export default function DefaultScreenPosts({ route, navigation }) {
       </View>
       <View style={styles.contentWrapper}>
         <View style={styles.avatarWrapper}>
-          <Image source={{ uri: avatar }} style={styles.avatar} />
+          <Image
+            source={avatarUri ? { uri: avatar } : null}
+            style={styles.avatar}
+          />
           <View style={styles.textWrapper}>
             <Text style={styles.textName}>{login}</Text>
             <Text style={styles.textEmail}>{userEmail}</Text>

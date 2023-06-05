@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-import { db, myStorage } from "../../firebase/config";
+import { app, db, myStorage } from "../../firebase/config";
+import { getAuth, updateProfile } from "firebase/auth";
 import { collection, onSnapshot, where, query } from "firebase/firestore";
 import {
   ref,
@@ -39,15 +40,18 @@ import bgImage from "../../../assets/images/bg.jpg";
 import { updateString } from "../../helpers/updateString";
 import { getRandomNumber } from "../../helpers/getRandomNumber";
 
+const auth = getAuth(app);
+
 export default function ProfileScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
   const [avatarUri, setAvatarUri] = useState("");
-  const [downloadURL, setDownloadURL] = useState(null);
 
   const dispatch = useDispatch();
   const { userId, avatar, login } = useSelector((state) => state.auth);
 
   useEffect(() => {
+    setAvatarUri(avatar);
+
     const getPosts = async () => {
       try {
         const database = await query(
@@ -76,37 +80,39 @@ export default function ProfileScreen({ navigation }) {
     getPosts();
   }, []);
 
-  const handleChangeAvatar = async () => {
-    if (downloadURL) {
-      const avatarRef = ref(myStorage, downloadURL);
-      await deleteObject(avatarRef);
-      dispatch(updateUserProfile({ avatar: null }));
-      setAvatarUri("");
-      setDownloadURL(null);
-    } else {
-      if (avatarUri.length) {
-        setAvatarUri("");
-      } else {
-        try {
-          const avatar = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-            base64: true,
-          });
+  const handleSelectAvatar = async () => {
+    try {
+      const avatar = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+        base64: true,
+      });
 
-          const uri = await resizeImage(avatar.assets[0].uri);
-          setAvatarUri(uri);
-        } catch (error) {
-          console.log("handleSelectAvatar: ", error);
-        }
-      }
+      const uri = await resizeImage(avatar.assets[0].uri);
+      setAvatarUri(uri);
+    } catch (error) {
+      console.log("handleSelectAvatar: ", error);
     }
   };
 
+  const handleDeleteAvatar = async () => {
+    if (avatarUri.startsWith("https")) {
+      await updateProfile(auth.currentUser, {
+        photoURL: "",
+      });
+
+      const avatarRef = ref(myStorage, avatarUri);
+      await deleteObject(avatarRef);
+    }
+
+    setAvatarUri("");
+    dispatch(updateUserProfile({ avatar: null }));
+  };
+
   const uploadAvatarToServer = async () => {
-    const uniquePostId = Date.now().toString();
+    const uniqueAvatarId = Date.now().toString();
 
     if (avatarUri) {
       try {
@@ -114,16 +120,17 @@ export default function ProfileScreen({ navigation }) {
 
         const file = await response.blob();
 
-        const avatarRef = await ref(myStorage, `avatars/${uniquePostId}`);
+        const avatarRef = await ref(myStorage, `avatars/${uniqueAvatarId}`);
 
         await uploadBytes(avatarRef, file);
 
         const downloadURL = await getDownloadURL(avatarRef);
-        setDownloadURL(downloadURL);
+
+        setAvatarUri(downloadURL);
+
         dispatch(updateUserProfile({ avatar: downloadURL }));
-        return downloadURL;
       } catch (error) {
-        console.log(error.message);
+        console.log("uploadAvatarToServer: ", error);
       }
     }
   };
@@ -141,17 +148,11 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const showMap = (location) => {
-    console.log(location);
     navigation.navigate("MapScreen", { location });
   };
 
-  const showServerAvatar = () => {
-    if (avatar) {
-      return { uri: avatar };
-    } else {
-      return null;
-    }
-  };
+  const showCheckButton = () =>
+    avatarUri && avatarUri !== avatar ? true : false;
 
   return (
     <View style={styles.container}>
@@ -160,18 +161,16 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarFrame}>
               <Image
-                source={
-                  avatarUri.length ? { uri: avatarUri } : showServerAvatar()
-                }
+                source={avatarUri ? { uri: avatarUri } : null}
                 style={styles.avatar}
               />
             </View>
             <TouchableWithoutFeedback onPress={() => {}}>
               <TouchableOpacity
-                onPress={handleChangeAvatar}
+                onPress={avatarUri ? handleDeleteAvatar : handleSelectAvatar}
                 activeOpacity={0.7}
               >
-                {avatarUri.length ? (
+                {avatarUri ? (
                   <Image
                     source={deleteAvatarIcon}
                     style={styles.changeAvatarIcon}
@@ -187,7 +186,7 @@ export default function ProfileScreen({ navigation }) {
               </TouchableOpacity>
             </TouchableWithoutFeedback>
 
-            {avatarUri && !downloadURL && (
+            {showCheckButton() && (
               <TouchableOpacity
                 onPress={uploadAvatarToServer}
                 activeOpacity={0.7}

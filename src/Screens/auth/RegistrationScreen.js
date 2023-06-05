@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 
 import { useNavigation } from "@react-navigation/native";
@@ -31,18 +31,18 @@ import { register } from "../../redux/auth/authOperations";
 import bgImage from "../../../assets/images/bg.jpg";
 
 const initialState = {
-  login: "",
   email: "",
   password: "",
+  login: "",
 };
 
 export default function RegistrationScreen() {
   const [formData, setFormData] = useState(initialState);
-  const [avatarUri, setAvatarUri] = useState("");
+  const [avatarUri, setAvatarUri] = useState(null);
   const [isHidePassword, setIsHidePassword] = useState(true);
 
-  const navigation = useNavigation();
   const dispatch = useDispatch();
+  const navigation = useNavigation();
 
   const handleSelectAvatar = async () => {
     try {
@@ -76,9 +76,11 @@ export default function RegistrationScreen() {
 
         const downloadURL = await getDownloadURL(avatarRef);
 
+        setAvatarUri(null);
+
         return downloadURL;
       } catch (error) {
-        console.log(error.message);
+        console.log("uploadAvatarToServer: ", error);
       }
     }
   };
@@ -86,48 +88,44 @@ export default function RegistrationScreen() {
   const handleSubmit = async () => {
     const avatar = await uploadAvatarToServer();
 
-    const { login, email, password } = formData;
+    setAvatarUri(avatar);
+
+    const { email, password, login } = formData;
 
     if (
-      login.trim().length === 0 ||
       email.trim().length === 0 ||
       password.trim().length === 0 ||
-      avatar.length === 0
+      login.trim().length === 0 ||
+      !avatar
     ) {
       console.log("All fields are required!");
       return;
     }
 
     const normalizedFormData = {
-      login: login.trim(),
       email: email.trim().toLowerCase(),
       password: password.trim(),
+      login: login.trim(),
       avatar,
     };
 
     Keyboard.dismiss();
     dispatch(register(normalizedFormData));
-    setAvatarUri("");
     setFormData(initialState);
-  };
-
-  const keyboardHide = () => {
-    Keyboard.dismiss();
+    setAvatarUri(null);
   };
 
   return (
     <View style={styles.container}>
-      <TouchableWithoutFeedback onPress={keyboardHide}>
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <ImageBackground source={bgImage} style={styles.bgImage}>
-          <TouchableWithoutFeedback onPress={keyboardHide}>
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <View style={styles.formWrapper}>
               <View style={styles.avatarWrapper}>
                 <View style={styles.avatarFrame}>
-                  <Image
-                    source={avatarUri.length ? { uri: avatarUri } : null}
-                    style={styles.avatar}
-                  />
-                  {/* <Image source={{ uri: avatarUri }} style={styles.avatar} /> */}
+                  {avatarUri && (
+                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                  )}
                 </View>
                 <TouchableOpacity
                   onPress={handleSelectAvatar}

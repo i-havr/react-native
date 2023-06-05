@@ -15,10 +15,6 @@ const authSlice = createSlice({
     updateUserProfile: (state, { payload }) => ({
       ...state,
       ...payload,
-      // userId: payload.userId,
-      // userEmail: payload.userEmail,
-      // login: payload.login,
-      // avatar: payload.avatar,
     }),
     authStateChange: (state, { payload }) => ({
       ...state,

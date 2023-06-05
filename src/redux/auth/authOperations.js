@@ -1,18 +1,28 @@
-import { auth } from "../../firebase/config";
+import { app, myStorage } from "../../firebase/config";
 
-import { onAuthStateChanged } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  getAuth,
+  updateProfile,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
+
+import { ref } from "firebase/storage";
 
 import authSlice from "./authSlice";
 
 const { updateUserProfile, authStateChange, authLogOut } = authSlice.actions;
 
+const auth = getAuth(app);
+
 export const register =
   ({ email, password, login, avatar }) =>
   async (dispatch, getState) => {
     try {
-      await auth.createUserWithEmailAndPassword(email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
 
-      await auth.currentUser.updateProfile({
+      await updateProfile(auth.currentUser, {
         displayName: login,
         photoURL: avatar,
       });
@@ -32,9 +42,8 @@ export const register =
           avatar: photoURL,
         })
       );
-      dispatch(authStateChange({ stateChange: true }));
     } catch (error) {
-      console.log(error.message);
+      console.log("createUserWithEmailAndPassword: ", error);
     }
   };
 
@@ -42,26 +51,9 @@ export const login =
   ({ email, password }) =>
   async (dispatch, getState) => {
     try {
-      // await auth.setPersistence(getAuth(app), browserLocalPersistence);
-      await auth.signInWithEmailAndPassword(email, password);
-
-      const {
-        uid,
-        displayName,
-        email: userEmail,
-        photoURL,
-      } = await auth.currentUser;
-
-      dispatch(
-        updateUserProfile({
-          userId: uid,
-          login: displayName,
-          userEmail,
-          avatar: photoURL,
-        })
-      );
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      console.log("login error: ", error.message);
+      console.log("login: ", error);
     }
   };
 
@@ -70,6 +62,22 @@ export const authChangeStatus = () => async (dispatch, getState) => {
     await onAuthStateChanged(auth, (user) => {
       if (user) {
         const { uid, displayName, email, photoURL } = auth.currentUser;
+
+        console.log("onAuthStateChanged -> uid ===>>>> ", uid);
+        console.log("onAuthStateChanged -> displayName ===>>>> ", displayName);
+        console.log("onAuthStateChanged -> email ===>>>> ", email);
+        console.log("onAuthStateChanged -> photoURL ===>>>> ", photoURL);
+
+        if (photoURL === undefined) {
+          return;
+        }
+
+        const { avatar, stateChange } = getState().auth;
+
+        console.log("onAuthStateChanged -> avatar ===>>>> ", avatar);
+        console.log("onAuthStateChanged -> stateChange ===>>>> ", stateChange);
+
+        const avatarRef = ref(myStorage, avatar);
 
         dispatch(
           updateUserProfile({
@@ -80,12 +88,11 @@ export const authChangeStatus = () => async (dispatch, getState) => {
           })
         );
 
-        dispatch(authStateChange({ stateChange: true }));
-        return;
+        !stateChange && dispatch(authStateChange({ stateChange: true }));
       }
     });
   } catch (error) {
-    console.log("Error in authStateChange ==>> ", error.message);
+    console.log("authChangeStatus: ", error);
   }
 };
 
@@ -94,6 +101,6 @@ export const logOut = () => async (dispatch, getState) => {
     await auth.signOut();
     dispatch(authLogOut());
   } catch (error) {
-    console.log("logout error: ", error.message);
+    console.log("logOut: ", error);
   }
 };
