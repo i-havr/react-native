@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 
 import * as Location from "expo-location";
@@ -33,11 +34,11 @@ const initialState = {
 
 export default function CreatePostsScreen({ navigation }) {
   const [formData, setFormData] = useState(initialState);
-
   const [location, setLocation] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
   const [snap, setSnap] = useState(null);
   const [photoUri, setPhotoUri] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const { userId, login } = useSelector((state) => state.auth);
 
@@ -93,11 +94,13 @@ export default function CreatePostsScreen({ navigation }) {
       }
     } catch (error) {
       console.log("takePhoto: ", error);
+    } finally {
     }
   };
 
   const handleSelectPhoto = async () => {
     try {
+      setIsLoading(true);
       const photo = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -118,6 +121,8 @@ export default function CreatePostsScreen({ navigation }) {
       setLocation(coords);
     } catch (error) {
       console.log("handleSelectPhoto: ", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -159,6 +164,7 @@ export default function CreatePostsScreen({ navigation }) {
       });
     } catch (error) {
       console.log("uploadPostToServer: ", error.message);
+    } finally {
     }
   };
 
@@ -188,6 +194,11 @@ export default function CreatePostsScreen({ navigation }) {
     <TouchableWithoutFeedback onPress={keyboardHide}>
       <View style={styles.container}>
         <View style={styles.headerWrapper}>
+          {isLoading && (
+            <View style={styles.loaderWrapper}>
+              <ActivityIndicator color="#FF6C00" size="large" />
+            </View>
+          )}
           <Text style={styles.text}>Create a post</Text>
           <TouchableOpacity
             onPress={() => {
@@ -464,5 +475,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     transform: [{ translate: [0, 16] }],
+  },
+  loaderWrapper: {
+    position: "absolute",
+    bottom: 8,
+    right: 16,
+    zIndex: 3,
   },
 });

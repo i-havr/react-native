@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { useNavigation } from "@react-navigation/native";
@@ -15,19 +15,20 @@ import {
   TouchableOpacity,
   Keyboard,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 
 import { SimpleLineIcons } from "@expo/vector-icons";
 
 import * as ImagePicker from "expo-image-picker";
 
-import { db, myStorage } from "../../firebase/config";
+import { myStorage } from "../../firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { resizeImage } from "../../helpers/resizeImage";
 
 import { register } from "../../redux/auth/authOperations";
-
+import deleteAvatarIcon from "../../../assets/icons/cancel.png";
 import bgImage from "../../../assets/images/bg.jpg";
 
 const initialState = {
@@ -39,12 +40,14 @@ const initialState = {
 export default function RegistrationScreen() {
   const [formData, setFormData] = useState(initialState);
   const [avatarUri, setAvatarUri] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isHidePassword, setIsHidePassword] = useState(true);
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
   const handleSelectAvatar = async () => {
+    setIsLoading(true);
     try {
       const avatar = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -58,6 +61,8 @@ export default function RegistrationScreen() {
       setAvatarUri(uri);
     } catch (error) {
       console.log("handleSelectAvatar: ", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,47 +81,60 @@ export default function RegistrationScreen() {
 
         const downloadURL = await getDownloadURL(avatarRef);
 
-        setAvatarUri(null);
+        setAvatarUri(downloadURL);
 
         return downloadURL;
       } catch (error) {
         console.log("uploadAvatarToServer: ", error);
+      } finally {
       }
     }
   };
 
   const handleSubmit = async () => {
-    const avatar = await uploadAvatarToServer();
+    try {
+      setIsLoading(true);
+      const avatar = await uploadAvatarToServer();
 
-    setAvatarUri(avatar);
+      setAvatarUri(avatar);
 
-    const { email, password, login } = formData;
+      const { email, password, login } = formData;
 
-    if (
-      email.trim().length === 0 ||
-      password.trim().length === 0 ||
-      login.trim().length === 0 ||
-      !avatar
-    ) {
-      console.log("All fields are required!");
-      return;
+      if (
+        email.trim().length === 0 ||
+        password.trim().length === 0 ||
+        login.trim().length === 0 ||
+        !avatar
+      ) {
+        console.log("All fields are required!");
+        return;
+      }
+
+      const normalizedFormData = {
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+        login: login.trim(),
+        avatar,
+      };
+
+      Keyboard.dismiss();
+      dispatch(register(normalizedFormData));
+      setFormData(initialState);
+      setAvatarUri(null);
+    } catch (error) {
+      console.log("handleSubmit: ", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    const normalizedFormData = {
-      email: email.trim().toLowerCase(),
-      password: password.trim(),
-      login: login.trim(),
-      avatar,
-    };
-
-    Keyboard.dismiss();
-    dispatch(register(normalizedFormData));
-    setFormData(initialState);
-    setAvatarUri(null);
   };
 
   return (
     <View style={styles.container}>
+      {isLoading && (
+        <View style={styles.loaderWrapper}>
+          <ActivityIndicator color="#FF6C00" size="large" />
+        </View>
+      )}
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <ImageBackground source={bgImage} style={styles.bgImage}>
           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -128,15 +146,24 @@ export default function RegistrationScreen() {
                   )}
                 </View>
                 <TouchableOpacity
-                  onPress={handleSelectAvatar}
+                  onPress={
+                    avatarUri ? () => setAvatarUri(null) : handleSelectAvatar
+                  }
                   activeOpacity={0.7}
                 >
-                  <SimpleLineIcons
-                    name="plus"
-                    size={25}
-                    color="#FF6C00"
-                    style={styles.addAvatarIcon}
-                  />
+                  {avatarUri ? (
+                    <Image
+                      source={deleteAvatarIcon}
+                      style={styles.changeAvatarIcon}
+                    />
+                  ) : (
+                    <SimpleLineIcons
+                      name="plus"
+                      size={25}
+                      color="#FF6C00"
+                      style={styles.addAvatarIcon}
+                    />
+                  )}
                 </TouchableOpacity>
               </View>
               <Text style={styles.text}>Registration</Text>
@@ -267,6 +294,12 @@ const styles = StyleSheet.create({
     height: "100%",
     transform: [{ scale: 1.01 }],
   },
+  changeAvatarIcon: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    transform: [{ translate: [20, -10] }],
+  },
   addAvatarIcon: {
     position: "absolute",
     bottom: 0,
@@ -335,5 +368,11 @@ const styles = StyleSheet.create({
     fontStyle: "normal",
     lineHeight: 19,
     color: "#1B4371",
+  },
+  loaderWrapper: {
+    position: "absolute",
+    top: 64,
+    right: 16,
+    zIndex: 3,
   },
 });

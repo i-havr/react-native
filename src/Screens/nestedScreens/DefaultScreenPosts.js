@@ -9,6 +9,7 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 
 import { useDispatch } from "react-redux";
@@ -26,6 +27,8 @@ import { getRandomNumber } from "../../helpers/getRandomNumber";
 export default function DefaultScreenPosts({ route, navigation }) {
   const [posts, setPosts] = useState([]);
   const [avatarUri, setAvatarUri] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const dispatch = useDispatch();
 
   const { userId, login, userEmail, avatar } = useSelector(
@@ -44,6 +47,7 @@ export default function DefaultScreenPosts({ route, navigation }) {
 
     const getPosts = async () => {
       try {
+        setIsLoading(true);
         const database = await query(
           collection(db, "posts"),
           where("userId", "==", userId)
@@ -61,10 +65,12 @@ export default function DefaultScreenPosts({ route, navigation }) {
         );
       } catch (error) {
         console.log("getPosts: ", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     getPosts();
-  }, [isFocused]);
+  }, [isFocused, avatar]);
 
   const userSignOut = () => {
     dispatch(logOut());
@@ -85,6 +91,11 @@ export default function DefaultScreenPosts({ route, navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.headerWrapper}>
+        {isLoading && (
+          <View style={styles.loaderWrapper}>
+            <ActivityIndicator color="#FF6C00" size="large" />
+          </View>
+        )}
         <Text style={styles.text}>Publications</Text>
         <TouchableOpacity onPress={userSignOut} activeOpacity={0.7}>
           <View style={styles.logoutIconWrapper}>
@@ -221,6 +232,7 @@ const styles = StyleSheet.create({
     height: 60,
     marginRight: 8,
     borderRadius: 16,
+    backgroundColor: "#F6F6F6",
   },
   textWrapper: {
     justifyContent: "center",
@@ -310,5 +322,11 @@ const styles = StyleSheet.create({
   },
   locationText: {
     textDecorationLine: "underline",
+  },
+  loaderWrapper: {
+    position: "absolute",
+    bottom: -45,
+    right: 16,
+    zIndex: 3,
   },
 });

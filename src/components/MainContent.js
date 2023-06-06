@@ -1,5 +1,5 @@
 import "react-native-gesture-handler";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { NavigationContainer } from "@react-navigation/native";
 import { authChangeStatus } from "../redux/auth/authOperations";
@@ -12,7 +12,6 @@ export const MainContent = () => {
   const routing = useRoute(stateChange);
 
   useEffect(() => {
-    console.log("оновлюємо.........");
     dispatch(authChangeStatus());
   }, [stateChange]);
 

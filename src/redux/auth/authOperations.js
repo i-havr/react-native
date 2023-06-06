@@ -63,21 +63,7 @@ export const authChangeStatus = () => async (dispatch, getState) => {
       if (user) {
         const { uid, displayName, email, photoURL } = auth.currentUser;
 
-        console.log("onAuthStateChanged -> uid ===>>>> ", uid);
-        console.log("onAuthStateChanged -> displayName ===>>>> ", displayName);
-        console.log("onAuthStateChanged -> email ===>>>> ", email);
-        console.log("onAuthStateChanged -> photoURL ===>>>> ", photoURL);
-
-        if (photoURL === undefined) {
-          return;
-        }
-
-        const { avatar, stateChange } = getState().auth;
-
-        console.log("onAuthStateChanged -> avatar ===>>>> ", avatar);
-        console.log("onAuthStateChanged -> stateChange ===>>>> ", stateChange);
-
-        const avatarRef = ref(myStorage, avatar);
+        const { stateChange } = getState().auth;
 
         dispatch(
           updateUserProfile({

@@ -20,6 +20,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 
 import authSlice from "../../redux/auth/authSlice";
@@ -45,6 +46,7 @@ const auth = getAuth(app);
 export default function ProfileScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
   const [avatarUri, setAvatarUri] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const dispatch = useDispatch();
   const { userId, avatar, login } = useSelector((state) => state.auth);
@@ -54,6 +56,7 @@ export default function ProfileScreen({ navigation }) {
 
     const getPosts = async () => {
       try {
+        setIsLoading(true);
         const database = await query(
           collection(db, "posts"),
           where("userId", "==", userId)
@@ -74,14 +77,17 @@ export default function ProfileScreen({ navigation }) {
         );
       } catch (error) {
         console.log("getPosts: ", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     getPosts();
-  }, []);
+  }, [avatar]);
 
   const handleSelectAvatar = async () => {
     try {
+      setIsLoading(true);
       const avatar = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -94,21 +100,29 @@ export default function ProfileScreen({ navigation }) {
       setAvatarUri(uri);
     } catch (error) {
       console.log("handleSelectAvatar: ", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteAvatar = async () => {
-    if (avatarUri.startsWith("https")) {
-      await updateProfile(auth.currentUser, {
-        photoURL: "",
-      });
+    try {
+      setIsLoading(true);
+      if (avatarUri.startsWith("https")) {
+        await updateProfile(auth.currentUser, {
+          photoURL: "",
+        });
 
-      const avatarRef = ref(myStorage, avatarUri);
-      await deleteObject(avatarRef);
+        const avatarRef = ref(myStorage, avatarUri);
+        await deleteObject(avatarRef);
+      }
+      setAvatarUri(null);
+      dispatch(updateUserProfile({ avatar: null }));
+    } catch (error) {
+      console.log("handleDeleteAvatar: ", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setAvatarUri("");
-    dispatch(updateUserProfile({ avatar: null }));
   };
 
   const uploadAvatarToServer = async () => {
@@ -116,6 +130,7 @@ export default function ProfileScreen({ navigation }) {
 
     if (avatarUri) {
       try {
+        setIsLoading(true);
         const response = await fetch(avatarUri);
 
         const file = await response.blob();
@@ -127,10 +142,17 @@ export default function ProfileScreen({ navigation }) {
         const downloadURL = await getDownloadURL(avatarRef);
 
         setAvatarUri(downloadURL);
-
         dispatch(updateUserProfile({ avatar: downloadURL }));
+
+        await updateProfile(auth.currentUser, {
+          photoURL: downloadURL,
+        });
+
+        return downloadURL;
       } catch (error) {
         console.log("uploadAvatarToServer: ", error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -151,11 +173,17 @@ export default function ProfileScreen({ navigation }) {
     navigation.navigate("MapScreen", { location });
   };
 
-  const showCheckButton = () =>
-    avatarUri && avatarUri !== avatar ? true : false;
+  const showCheckButton = () => {
+    return avatarUri && String(avatarUri) !== String(avatar) ? true : false;
+  };
 
   return (
     <View style={styles.container}>
+      {isLoading && (
+        <View style={styles.loaderWrapper}>
+          <ActivityIndicator color="#FF6C00" size="large" />
+        </View>
+      )}
       <ImageBackground source={bgImage} style={styles.bgImage}>
         <View style={styles.contentWrapper}>
           <View style={styles.avatarWrapper}>
@@ -434,5 +462,11 @@ const styles = StyleSheet.create({
   },
   locationText: {
     textDecorationLine: "underline",
+  },
+  loaderWrapper: {
+    position: "absolute",
+    top: 64,
+    right: 16,
+    zIndex: 3,
   },
 });
