@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 import PostsScreen from "./PostsScreen";
 import CreatePostsScreen from "./CreatePostsScreen";
-import ProfileScreen from "./ProfileScreen";
+import ProfileScreen from "./ProfileScreen/ProfileScreen";
 
 import { Feather } from "@expo/vector-icons";
 

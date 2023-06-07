@@ -20,11 +20,10 @@ import { collection, onSnapshot, where, query } from "firebase/firestore";
 import { logOut } from "../../redux/auth/authOperations";
 
 import { Feather } from "@expo/vector-icons";
-import messageCircle from "../../../assets/icons/message-circle.png";
-import { updateString } from "../../helpers/updateString";
-import { getRandomNumber } from "../../helpers/getRandomNumber";
 
-export default function DefaultScreenPosts({ route, navigation }) {
+import { Post } from "../../components/Post";
+
+export default function DefaultScreenPosts({ navigation }) {
   const [posts, setPosts] = useState([]);
   const [avatarUri, setAvatarUri] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -119,58 +118,7 @@ export default function DefaultScreenPosts({ route, navigation }) {
           data={posts}
           keyExtractor={({ id }) => id}
           renderItem={({ item }) => (
-            <View style={styles.postWrapper}>
-              <View style={styles.imageWrapper}>
-                <Image
-                  source={{ uri: item.downloadURL }}
-                  style={styles.postImage}
-                />
-              </View>
-              <Text style={styles.postTitle}>{item.formData.title}</Text>
-              <View style={styles.postDetails}>
-                <View style={styles.reactionWrapper}>
-                  <View style={styles.commentsWrapper}>
-                    <TouchableOpacity
-                      onPress={() => comment(item.id, item.downloadURL)}
-                      activeOpacity={0.7}
-                    >
-                      <Image
-                        source={messageCircle}
-                        style={styles.commentsIcon}
-                      />
-                    </TouchableOpacity>
-                    <Text style={styles.commentsNumber}>5</Text>
-                  </View>
-                  <View style={styles.likesWrapper}>
-                    <TouchableOpacity onPress={like} activeOpacity={0.7}>
-                      <Feather
-                        name="thumbs-up"
-                        size={20}
-                        color="#FF6C00"
-                        style={styles.likesIcon}
-                      />
-                    </TouchableOpacity>
-                    <Text style={styles.likesNumber}>{getRandomNumber()}</Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  onPress={() => showMap(item.location)}
-                  activeOpacity={0.4}
-                >
-                  <View style={styles.locationWrapper}>
-                    <Feather
-                      name="map-pin"
-                      size={20}
-                      color="#BDBDBD"
-                      style={styles.mapPin}
-                    />
-                    <Text style={styles.locationText}>
-                      {updateString(item.formData.locationTitle)}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Post post={item} navigation={navigation} />
           )}
         />
       </View>
@@ -251,77 +199,6 @@ const styles = StyleSheet.create({
     color: "#212121",
     lineHeight: 13,
     opacity: 0.8,
-  },
-  postWrapper: {
-    marginBottom: 34,
-  },
-  imageWrapper: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    height: 240,
-    marginBottom: 8,
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  postImage: {
-    width: "100%",
-    height: "100%",
-  },
-  postTitle: {
-    marginBottom: 8,
-    fontFamily: "Roboto-Medium",
-    fontStyle: "normal",
-    fontSize: 16,
-    lineHeight: 19,
-    color: "#212121",
-  },
-  postDetails: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  reactionWrapper: {
-    flexDirection: "row",
-    gap: 24,
-  },
-  commentsWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  commentsIcon: {
-    width: 25,
-    height: 25,
-    marginRight: 6,
-  },
-  commentsNumber: {
-    fontFamily: "Roboto-Regular",
-    fontStyle: "normal",
-    fontSize: 16,
-    lineHeight: 19,
-    color: "#212121",
-  },
-  likesWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  likesIcon: {
-    marginRight: 6,
-  },
-  likesNumber: {
-    fontFamily: "Roboto-Regular",
-    fontStyle: "normal",
-    fontSize: 16,
-    lineHeight: 19,
-    color: "#212121",
-  },
-  locationWrapper: {
-    flexDirection: "row",
-  },
-  mapPin: {
-    marginRight: 6,
-  },
-  locationText: {
-    textDecorationLine: "underline",
   },
   loaderWrapper: {
     position: "absolute",

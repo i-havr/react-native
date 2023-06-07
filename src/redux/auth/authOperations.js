@@ -8,17 +8,13 @@ import {
   createUserWithEmailAndPassword,
 } from "firebase/auth";
 
-import { ref } from "firebase/storage";
-
-import authSlice from "./authSlice";
-
-const { updateUserProfile, authStateChange, authLogOut } = authSlice.actions;
+import { updateUserProfile, authStateChange, authLogOut } from "./authSlice";
 
 const auth = getAuth(app);
 
 export const register =
   ({ email, password, login, avatar }) =>
-  async (dispatch, getState) => {
+  async (dispatch) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
 
@@ -49,7 +45,7 @@ export const register =
 
 export const login =
   ({ email, password }) =>
-  async (dispatch, getState) => {
+  async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
@@ -82,7 +78,7 @@ export const authChangeStatus = () => async (dispatch, getState) => {
   }
 };
 
-export const logOut = () => async (dispatch, getState) => {
+export const logOut = () => async (dispatch) => {
   try {
     await auth.signOut();
     dispatch(authLogOut());

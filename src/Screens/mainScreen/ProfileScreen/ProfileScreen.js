@@ -1,0 +1,105 @@
+import React, { useState, useEffect } from "react";
+import {
+  Text,
+  View,
+  ImageBackground,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
+
+import { useSelector, useDispatch } from "react-redux";
+import { logOut } from "../../../redux/auth/authOperations";
+
+import { db } from "../../../firebase/config";
+import { collection, onSnapshot, where, query } from "firebase/firestore";
+
+import { Post } from "../../../components/Post";
+import { AwatarWrapper } from "../../../components/AvatarWrapper/AvatarWrapper";
+
+import { Feather } from "@expo/vector-icons";
+import bgImage from "../../../../assets/images/bg.jpg";
+
+import { styles } from "./ProfileScreen.styles";
+
+export default function ProfileScreen({ navigation }) {
+  const [posts, setPosts] = useState([]);
+  const [avatarUri, setAvatarUri] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const dispatch = useDispatch();
+  const { userId, avatar, login } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    setAvatarUri(avatar);
+
+    const getPosts = async () => {
+      setIsLoading(true);
+      try {
+        const database = await query(
+          collection(db, "posts"),
+          where("userId", "==", userId)
+        );
+
+        onSnapshot(
+          database,
+          (data) => {
+            const sortedData = data.docs
+              .map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              }))
+              .sort((a, b) => b.createdAt - a.createdAt);
+            setPosts(sortedData);
+          },
+          () => {}
+        );
+      } catch (error) {
+        console.log("getPosts: ", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getPosts();
+  }, [avatar]);
+
+  const userSignOut = () => {
+    dispatch(logOut());
+  };
+
+  return (
+    <View style={styles.container}>
+      {isLoading && (
+        <View style={styles.loaderWrapper}>
+          <ActivityIndicator color="#FF6C00" size="large" />
+        </View>
+      )}
+      <ImageBackground source={bgImage} style={styles.bgImage}>
+        <View style={styles.contentWrapper}>
+          <View style={styles.logoutIconWrapper}>
+            <TouchableOpacity onPress={userSignOut} activeOpacity={0.7}>
+              <Feather name="log-out" size={22} style={styles.logoutIcon} />
+            </TouchableOpacity>
+          </View>
+
+          <AwatarWrapper
+            avatarUri={avatarUri}
+            setIsLoading={setIsLoading}
+            setAvatarUri={setAvatarUri}
+          />
+
+          <Text style={styles.text}>{login}</Text>
+
+          <FlatList
+            data={posts}
+            keyExtractor={({ id }) => id}
+            renderItem={({ item }) => (
+              <Post post={item} navigation={navigation} />
+            )}
+          />
+        </View>
+      </ImageBackground>
+    </View>
+  );
+}

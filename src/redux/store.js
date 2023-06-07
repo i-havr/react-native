@@ -12,7 +12,7 @@ import {
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import authSlice from "./auth/authSlice";
+import { authSlice } from "./auth/authSlice";
 
 const persistConfig = {
   key: "auth",

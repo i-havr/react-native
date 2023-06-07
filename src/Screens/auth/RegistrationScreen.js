@@ -22,6 +22,8 @@ import { SimpleLineIcons } from "@expo/vector-icons";
 
 import * as ImagePicker from "expo-image-picker";
 
+import { uploadAvatarToServer } from "../../helpers/uploadAvatarToServer";
+
 import { myStorage } from "../../firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -66,35 +68,10 @@ export default function RegistrationScreen() {
     }
   };
 
-  const uploadAvatarToServer = async () => {
-    const uniquePostId = Date.now().toString();
-
-    if (avatarUri) {
-      try {
-        const response = await fetch(avatarUri);
-
-        const file = await response.blob();
-
-        const avatarRef = await ref(myStorage, `avatars/${uniquePostId}`);
-
-        await uploadBytes(avatarRef, file);
-
-        const downloadURL = await getDownloadURL(avatarRef);
-
-        setAvatarUri(downloadURL);
-
-        return downloadURL;
-      } catch (error) {
-        console.log("uploadAvatarToServer: ", error);
-      } finally {
-      }
-    }
-  };
-
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-      const avatar = await uploadAvatarToServer();
+      const avatar = await uploadAvatarToServer(avatarUri, setAvatarUri);
 
       setAvatarUri(avatar);
 
