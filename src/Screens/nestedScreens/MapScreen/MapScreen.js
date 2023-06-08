@@ -4,19 +4,11 @@ import MapView, { Marker } from "react-native-maps";
 
 import { useIsFocused } from "@react-navigation/native";
 
-import {
-  View,
-  Text,
-  StyleSheet,
-  Keyboard,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  Dimensions,
-} from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 
-import * as Location from "expo-location";
+import { Feather } from "@expo/vector-icons";
 
-import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { styles } from "./MapScreen.styles";
 
 export default function MapScreen({ navigation, route }) {
   const [mapPoint, setMapPoint] = useState(() => ({
@@ -70,48 +62,3 @@ export default function MapScreen({ navigation, route }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: "100%",
-    paddingTop: 54,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "flex-start",
-    alignItems: "center",
-  },
-  headerWrapper: {
-    position: "relative",
-    width: "100%",
-    paddingTop: 12,
-    paddingBottom: 12,
-    borderBottomColor: "rgba(0, 0, 0, 0.3)",
-    borderBottomWidth: 0.5,
-  },
-  text: {
-    textAlign: "center",
-    fontFamily: "Roboto-Medium",
-    fontSize: 17,
-    fontStyle: "normal",
-    lineHeight: 22,
-    letterSpacing: -0.408,
-    color: "#212121",
-  },
-  arrowWrapper: {
-    position: "absolute",
-    left: 16,
-    bottom: "50%",
-    transform: [{ translate: [0, 3] }],
-  },
-  contentWrapper: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    justifyContent: "space-between",
-    backgroundColor: "red",
-  },
-  mapView: {
-    flex: 1,
-    backgroundColor: "blue",
-  },
-});

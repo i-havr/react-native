@@ -1,23 +1,27 @@
 import React, { useState, useEffect } from "react";
+
+import { useIsFocused } from "@react-navigation/native";
+
 import {
   Text,
   View,
   ImageBackground,
-  TouchableOpacity,
   FlatList,
   ActivityIndicator,
 } from "react-native";
 
 import { useSelector, useDispatch } from "react-redux";
-import { logOut } from "../../../redux/auth/authOperations";
+import { updateUserProfile } from "../../../redux/auth/authSlice";
 
 import { db } from "../../../firebase/config";
 import { collection, onSnapshot, where, query } from "firebase/firestore";
 
+import { handleDeleteAvatar } from "../../../helpers";
+
 import { Post } from "../../../components/Post";
+import { LogoutIconWrapper } from "../../../components/LogoutIconWrapper";
 import { AwatarWrapper } from "../../../components/AvatarWrapper/AvatarWrapper";
 
-import { Feather } from "@expo/vector-icons";
 import bgImage from "../../../../assets/images/bg.jpg";
 
 import { styles } from "./ProfileScreen.styles";
@@ -28,7 +32,10 @@ export default function ProfileScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const dispatch = useDispatch();
+
   const { userId, avatar, login } = useSelector((state) => state.auth);
+
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     setAvatarUri(avatar);
@@ -62,10 +69,11 @@ export default function ProfileScreen({ navigation }) {
     };
 
     getPosts();
-  }, [avatar]);
+  }, [isFocused, avatar]);
 
-  const userSignOut = () => {
-    dispatch(logOut());
+  const deleteAvatar = () => {
+    handleDeleteAvatar(avatarUri, setIsLoading, setAvatarUri);
+    dispatch(updateUserProfile({ avatar: null }));
   };
 
   return (
@@ -77,20 +85,15 @@ export default function ProfileScreen({ navigation }) {
       )}
       <ImageBackground source={bgImage} style={styles.bgImage}>
         <View style={styles.contentWrapper}>
-          <View style={styles.logoutIconWrapper}>
-            <TouchableOpacity onPress={userSignOut} activeOpacity={0.7}>
-              <Feather name="log-out" size={22} style={styles.logoutIcon} />
-            </TouchableOpacity>
-          </View>
-
+          <LogoutIconWrapper />
           <AwatarWrapper
             avatarUri={avatarUri}
             setIsLoading={setIsLoading}
             setAvatarUri={setAvatarUri}
+            deleteAvatar={deleteAvatar}
+            isCheckButton={true}
           />
-
           <Text style={styles.text}>{login}</Text>
-
           <FlatList
             data={posts}
             keyExtractor={({ id }) => id}

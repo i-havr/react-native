@@ -15,22 +15,26 @@ import { auth } from "../../firebase/config";
 import { SimpleLineIcons } from "@expo/vector-icons";
 import deleteAvatarIcon from "../../../assets/icons/cancel.png";
 
-import {
-  handleSelectAvatar,
-  handleDeleteAvatar,
-  uploadAvatarToServer,
-} from "../../helpers";
+import { handleSelectImage, uploadImageToServer } from "../../helpers";
 
 import { styles } from "./AvatarWrapper.styles";
 
-export const AwatarWrapper = ({ avatarUri, setIsLoading, setAvatarUri }) => {
+export const AwatarWrapper = ({
+  avatarUri,
+  setIsLoading,
+  setAvatarUri,
+  deleteAvatar,
+  isCheckButton,
+}) => {
   const { avatar } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   const updateUserAvatar = async () => {
     try {
       setIsLoading(true);
-      const downloadURL = await uploadAvatarToServer(avatarUri, setAvatarUri);
+      const downloadURL = await uploadImageToServer(avatarUri, "avatars");
+
+      setAvatarUri(downloadURL);
 
       dispatch(updateUserProfile({ avatar: downloadURL }));
 
@@ -44,29 +48,25 @@ export const AwatarWrapper = ({ avatarUri, setIsLoading, setAvatarUri }) => {
     }
   };
 
-  const deleteAvatar = () => {
-    handleDeleteAvatar(avatarUri, setIsLoading, setAvatarUri);
-    dispatch(updateUserProfile({ avatar: null }));
-  };
-
-  const showCheckButton = () => {
-    return avatarUri && String(avatarUri) !== String(avatar) ? true : false;
+  const showCheckButton = (isCheckButton) => {
+    return isCheckButton && avatarUri && String(avatarUri) !== String(avatar)
+      ? true
+      : false;
   };
 
   return (
     <View style={styles.avatarWrapper}>
       <View style={styles.avatarFrame}>
-        <Image
-          source={avatarUri ? { uri: avatarUri } : null}
-          style={styles.avatar}
-        />
+        {avatarUri && (
+          <Image source={{ uri: avatarUri }} style={styles.avatar} />
+        )}
       </View>
       <TouchableWithoutFeedback onPress={() => {}}>
         <TouchableOpacity
           onPress={
             avatarUri
               ? deleteAvatar
-              : () => handleSelectAvatar(setIsLoading, setAvatarUri)
+              : () => handleSelectImage(setIsLoading, setAvatarUri, [4, 3])
           }
           activeOpacity={0.7}
         >
@@ -83,7 +83,7 @@ export const AwatarWrapper = ({ avatarUri, setIsLoading, setAvatarUri }) => {
         </TouchableOpacity>
       </TouchableWithoutFeedback>
 
-      {showCheckButton() && (
+      {showCheckButton(isCheckButton) && (
         <TouchableOpacity onPress={updateUserAvatar} activeOpacity={0.7}>
           <SimpleLineIcons
             name="check"

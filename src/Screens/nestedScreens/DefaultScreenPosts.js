@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 
 import { useIsFocused } from "@react-navigation/native";
+
 import {
   View,
   Text,
@@ -47,10 +48,7 @@ export default function DefaultScreenPosts({ navigation }) {
     const getPosts = async () => {
       try {
         setIsLoading(true);
-        const database = await query(
-          collection(db, "posts"),
-          where("userId", "==", userId)
-        );
+        const database = await collection(db, "posts");
 
         onSnapshot(
           database,

@@ -36,7 +36,11 @@ export const Post = ({ post, navigation }) => {
   };
 
   const showMap = (location) => {
-    navigation.navigate("MapScreen", { location });
+    if (location) {
+      navigation.navigate("MapScreen", { location });
+    } else {
+      console.log("There is no any information about location");
+    }
   };
   return (
     <View style={styles.postWrapper}>
