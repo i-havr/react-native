@@ -1,4 +1,4 @@
-import { app, myStorage } from "../../firebase/config";
+import { app } from "../../firebase/config";
 
 import {
   onAuthStateChanged,
@@ -9,6 +9,9 @@ import {
 } from "firebase/auth";
 
 import { updateUserProfile, authStateChange, authLogOut } from "./authSlice";
+
+import { showErrorMessage } from "../../helpers";
+import { uploadUserToServer } from "../../services";
 
 const auth = getAuth(app);
 
@@ -38,8 +41,10 @@ export const register =
           avatar: photoURL,
         })
       );
+
+      await uploadUserToServer(photoURL, uid, userEmail, displayName);
     } catch (error) {
-      console.log("createUserWithEmailAndPassword: ", error);
+      showErrorMessage(error.message);
     }
   };
 
@@ -49,7 +54,7 @@ export const login =
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      console.log("login: ", error);
+      showErrorMessage(error.message);
     }
   };
 
@@ -74,7 +79,7 @@ export const authChangeStatus = () => async (dispatch, getState) => {
       }
     });
   } catch (error) {
-    console.log("authChangeStatus: ", error);
+    showErrorMessage(error.message);
   }
 };
 
@@ -83,6 +88,6 @@ export const logOut = () => async (dispatch) => {
     await auth.signOut();
     dispatch(authLogOut());
   } catch (error) {
-    console.log("logOut: ", error);
+    showErrorMessage(error.message);
   }
 };

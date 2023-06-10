@@ -21,7 +21,9 @@ import { Feather } from "@expo/vector-icons";
 import { Comment } from "../../../components/Comment";
 import { CommentInput } from "../../../components/CommentInput";
 
-import { uploadCommentToServer, getPostOwner } from "../../../helpers";
+import { showErrorMessage } from "../../../helpers";
+
+import { uploadCommentToServer, getPostOwner } from "../../../services";
 
 import { styles } from "./CommentsScreen.styles";
 
@@ -46,18 +48,26 @@ export default function CommentsScreen({ route, navigation }) {
     getPostOwner(userId, setIsPostOwner);
 
     const getComments = async () => {
-      const commentsDB = await collection(db, "posts", postId, "comments");
+      try {
+        const commentsDB = await collection(db, "posts", postId, "comments");
 
-      onSnapshot(
-        commentsDB,
-        (data) => {
-          setComments(
-            data.docs.map((comment) => ({ id: comment.id, ...comment.data() }))
-          );
-        },
-        () => {}
-      );
+        onSnapshot(
+          commentsDB,
+          (data) => {
+            setComments(
+              data.docs.map((comment) => ({
+                id: comment.id,
+                ...comment.data(),
+              }))
+            );
+          },
+          () => {}
+        );
+      } catch (error) {
+        showErrorMessage(error.message);
+      }
     };
+
     getComments();
   }, []);
 

@@ -4,7 +4,6 @@ import { useDispatch } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
 
 import {
-  StyleSheet,
   Text,
   View,
   ImageBackground,
@@ -14,7 +13,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import { uploadImageToServer } from "../../../helpers";
+import { showErrorMessage } from "../../../helpers";
+import { uploadImageToServer } from "../../../services";
 
 import { register } from "../../../redux/auth/authOperations";
 
@@ -69,7 +69,7 @@ export default function RegistrationScreen() {
       setFormData(initialState);
       setAvatarUri(null);
     } catch (error) {
-      console.log("handleSubmit: ", error);
+      showErrorMessage(error.message);
     } finally {
       setIsLoading(false);
     }

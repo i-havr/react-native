@@ -16,7 +16,8 @@ import { updateUserProfile } from "../../../redux/auth/authSlice";
 import { db } from "../../../firebase/config";
 import { collection, onSnapshot, where, query } from "firebase/firestore";
 
-import { handleDeleteAvatar } from "../../../helpers";
+import { showErrorMessage } from "../../../helpers";
+import { handleDeleteAvatar } from "../../../services";
 
 import { Post } from "../../../components/Post";
 import { LogoutIconWrapper } from "../../../components/LogoutIconWrapper";
@@ -62,7 +63,7 @@ export default function ProfileScreen({ navigation }) {
           () => {}
         );
       } catch (error) {
-        console.log("getPosts: ", error);
+        showErrorMessage(error.message);
       } finally {
         setIsLoading(false);
       }

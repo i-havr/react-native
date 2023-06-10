@@ -5,7 +5,7 @@ import { collection, getCountFromServer } from "firebase/firestore";
 
 import { Feather } from "@expo/vector-icons";
 import messageCircle from "../../../assets/icons/message-circle.png";
-import { updateString } from "../../helpers/updateString";
+import { updateString } from "../../helpers";
 
 import { styles } from "./Post.styles";
 

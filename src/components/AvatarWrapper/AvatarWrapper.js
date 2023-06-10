@@ -15,7 +15,7 @@ import { auth } from "../../firebase/config";
 import { SimpleLineIcons } from "@expo/vector-icons";
 import deleteAvatarIcon from "../../../assets/icons/cancel.png";
 
-import { handleSelectImage, uploadImageToServer } from "../../helpers";
+import { handleSelectImage, uploadImageToServer } from "../../services";
 
 import { styles } from "./AvatarWrapper.styles";
 

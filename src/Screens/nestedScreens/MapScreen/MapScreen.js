@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
-
-import MapView, { Marker } from "react-native-maps";
-
-import { useIsFocused } from "@react-navigation/native";
-
 import { View, Text, TouchableOpacity } from "react-native";
+import MapView, { Marker } from "react-native-maps";
+import { useIsFocused } from "@react-navigation/native";
 
 import { Feather } from "@expo/vector-icons";
 

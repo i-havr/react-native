@@ -1,11 +1,34 @@
 import { db } from "../firebase/config";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  setDoc,
+  Timestamp,
+} from "firebase/firestore";
 
-import { uploadImageToServer } from "./uploadImageToServer";
+import { uploadImageToServer } from "./imagesService";
+
+export const getPostOwner = async (userId, setIsPostOwner) => {
+  try {
+    const postsRef = await collection(db, "posts");
+
+    onSnapshot(postsRef, (data) => {
+      setIsPostOwner(
+        data.docs.some(async (post) => {
+          (await post.data().userId) === userId;
+        })
+      );
+    });
+  } catch (error) {
+    console.log("getPostOwner", error);
+  }
+};
 
 export const uploadPostToServer = async (
   photoUri,
   userId,
+  email,
   login,
   formData,
   location
@@ -20,6 +43,7 @@ export const uploadPostToServer = async (
     await setDoc(createPost, {
       downloadURL,
       userId,
+      email,
       login,
       formData,
       location,

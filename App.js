@@ -3,6 +3,7 @@ import React from "react";
 import { Text } from "react-native";
 import { PersistGate } from "redux-persist/integration/react";
 import { Provider } from "react-redux";
+import FlashMessage from "react-native-flash-message";
 
 import { useFonts } from "expo-font";
 
@@ -25,6 +26,7 @@ export default function App() {
       <PersistGate loading={<Text>Loading...</Text>} persistor={persistor}>
         <MainContent />
       </PersistGate>
+      <FlashMessage position="bottom" duration={5000} />
     </Provider>
   );
 }
