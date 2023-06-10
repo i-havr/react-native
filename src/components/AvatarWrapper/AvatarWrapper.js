@@ -66,7 +66,7 @@ export const AwatarWrapper = ({
           onPress={
             avatarUri
               ? deleteAvatar
-              : () => handleSelectImage(setIsLoading, setAvatarUri, [4, 3])
+              : () => handleSelectImage(setAvatarUri, [4, 3])
           }
           activeOpacity={0.7}
         >

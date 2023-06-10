@@ -11,7 +11,6 @@ import {
 import { updateUserProfile, authStateChange, authLogOut } from "./authSlice";
 
 import { showErrorMessage } from "../../helpers";
-import { uploadUserToServer } from "../../services";
 
 const auth = getAuth(app);
 
@@ -41,8 +40,6 @@ export const register =
           avatar: photoURL,
         })
       );
-
-      await uploadUserToServer(photoURL, uid, userEmail, displayName);
     } catch (error) {
       showErrorMessage(error.message);
     }

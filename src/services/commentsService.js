@@ -1,5 +1,12 @@
 import { db } from "../firebase/config";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
+
+import {
+  collection,
+  doc,
+  setDoc,
+  Timestamp,
+  getCountFromServer,
+} from "firebase/firestore";
 
 export const uploadCommentToServer = async (
   postId,
@@ -21,5 +28,18 @@ export const uploadCommentToServer = async (
     });
   } catch (error) {
     console.log("uploadCommentToServer", error);
+  }
+};
+
+export const updateCommentsQty = async (postId) => {
+  try {
+    const commentsRef = collection(db, "posts", postId, "comments");
+
+    const snapshot = await getCountFromServer(commentsRef);
+    const count = await snapshot.data().count;
+
+    return count;
+  } catch (error) {
+    console.log("updateLikesQty: ", error);
   }
 };

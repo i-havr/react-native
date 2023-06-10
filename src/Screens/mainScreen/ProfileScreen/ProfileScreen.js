@@ -42,7 +42,6 @@ export default function ProfileScreen({ navigation }) {
     setAvatarUri(avatar);
 
     const getPosts = async () => {
-      setIsLoading(true);
       try {
         const database = await query(
           collection(db, "posts"),
@@ -64,8 +63,6 @@ export default function ProfileScreen({ navigation }) {
         );
       } catch (error) {
         showErrorMessage(error.message);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -99,7 +96,11 @@ export default function ProfileScreen({ navigation }) {
             data={posts}
             keyExtractor={({ id }) => id}
             renderItem={({ item }) => (
-              <Post post={item} navigation={navigation} />
+              <Post
+                post={item}
+                navigation={navigation}
+                setIsLoading={setIsLoading}
+              />
             )}
           />
         </View>

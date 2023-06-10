@@ -11,9 +11,8 @@ import * as ImagePicker from "expo-image-picker";
 
 import { resizeImage } from "../helpers";
 
-export const handleSelectImage = async (setIsLoading, setImageUri, aspect) => {
+export const handleSelectImage = async (setImageUri, aspect) => {
   try {
-    setIsLoading(true);
     const image = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -26,8 +25,6 @@ export const handleSelectImage = async (setIsLoading, setImageUri, aspect) => {
     setImageUri(uri);
   } catch (error) {
     console.log("handleSelectImage: ", error);
-  } finally {
-    setIsLoading(false);
   }
 };
 

@@ -1,27 +1,25 @@
 import { db } from "../firebase/config";
-import {
-  collection,
-  onSnapshot,
-  doc,
-  setDoc,
-  Timestamp,
-} from "firebase/firestore";
+import { doc, setDoc, Timestamp, getDoc } from "firebase/firestore";
 
 import { uploadImageToServer } from "./imagesService";
 
-export const getPostOwner = async (userId, setIsPostOwner) => {
+export const getCurrentUserComment = async (
+  userId,
+  postId,
+  commentId,
+  setIsCurrentUserComment
+) => {
   try {
-    const postsRef = await collection(db, "posts");
+    const commentRef = doc(db, "posts", postId, "comments", commentId);
+    const commentSnap = await getDoc(commentRef);
 
-    onSnapshot(postsRef, (data) => {
-      setIsPostOwner(
-        data.docs.some(async (post) => {
-          (await post.data().userId) === userId;
-        })
-      );
-    });
+    if (commentSnap.data().userId === userId) {
+      setIsCurrentUserComment(true);
+    } else {
+      setIsCurrentUserComment(false);
+    }
   } catch (error) {
-    console.log("getPostOwner", error);
+    console.log("getCurrentUserComment", error);
   }
 };
 

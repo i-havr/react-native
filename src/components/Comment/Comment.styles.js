@@ -23,7 +23,6 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.03)",
     width: Dimensions.get("window").width - 76,
     padding: 16,
-    borderTopRightRadius: 6,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },

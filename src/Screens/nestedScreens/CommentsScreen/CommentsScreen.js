@@ -23,14 +23,13 @@ import { CommentInput } from "../../../components/CommentInput";
 
 import { showErrorMessage } from "../../../helpers";
 
-import { uploadCommentToServer, getPostOwner } from "../../../services";
+import { uploadCommentToServer } from "../../../services";
 
 import { styles } from "./CommentsScreen.styles";
 
 export default function CommentsScreen({ route, navigation }) {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
-  const [isPostOwner, setIsPostOwner] = useState(false);
 
   const { userId, avatar } = useSelector((state) => state.auth);
 
@@ -44,8 +43,6 @@ export default function CommentsScreen({ route, navigation }) {
         tabBarStyle: { display: "none" },
       });
     }
-
-    getPostOwner(userId, setIsPostOwner);
 
     const getComments = async () => {
       try {
@@ -72,9 +69,9 @@ export default function CommentsScreen({ route, navigation }) {
   }, []);
 
   const handleSubmitComment = () => {
-    uploadCommentToServer(postId, avatar, userId, commentText);
     Keyboard.dismiss();
     setCommentText("");
+    uploadCommentToServer(postId, avatar, userId, commentText);
   };
 
   return (
@@ -93,6 +90,7 @@ export default function CommentsScreen({ route, navigation }) {
             </View>
           </TouchableOpacity>
         </View>
+
         <View style={styles.contentWrapper}>
           <View style={styles.imageWrapper}>
             <Image source={{ uri: downloadURL }} style={styles.postImage} />
@@ -102,10 +100,11 @@ export default function CommentsScreen({ route, navigation }) {
             data={comments}
             keyExtractor={({ id }) => id}
             renderItem={({ item }) => (
-              <Comment comment={item} isPostOwner={isPostOwner} />
+              <Comment comment={item} userId={userId} postId={postId} />
             )}
           />
         </View>
+
         <CommentInput
           commentText={commentText}
           handleSubmitComment={handleSubmitComment}

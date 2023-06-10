@@ -73,17 +73,21 @@ export default function CreatePostsScreen({ navigation }) {
   }
 
   const addImageLocation = async () => {
-    const location = await Location.getCurrentPositionAsync({});
+    // const location = await Location.getCurrentPositionAsync({});
     const coords = {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
+      // latitude: location.coords.latitude,
+      // longitude: location.coords.longitude,
+
+      // coords of Venice, Italy
+      latitude: 45.434092,
+      longitude: 12.338497,
     };
     setLocation(coords);
   };
 
   const selectImage = async () => {
     try {
-      await handleSelectImage(setIsLoading, setPhotoUri, [3, 2]);
+      await handleSelectImage(setPhotoUri, [3, 2]);
       addImageLocation();
     } catch (error) {
       showErrorMessage(error.message);

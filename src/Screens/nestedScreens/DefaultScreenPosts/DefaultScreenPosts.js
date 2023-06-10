@@ -29,7 +29,7 @@ import { styles } from "./DefaultScreenPosts.styles";
 export default function DefaultScreenPosts({ navigation }) {
   const [posts, setPosts] = useState([]);
   const [avatarUri, setAvatarUri] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const dispatch = useDispatch();
 
@@ -44,10 +44,10 @@ export default function DefaultScreenPosts({ navigation }) {
       });
 
     setAvatarUri(avatar);
+    setIsLoading(true);
 
     const getPosts = async () => {
       try {
-        setIsLoading(true);
         const database = await collection(db, "posts");
 
         onSnapshot(
@@ -66,6 +66,7 @@ export default function DefaultScreenPosts({ navigation }) {
         setIsLoading(false);
       }
     };
+
     getPosts();
   }, [isFocused, avatar]);
 
@@ -104,7 +105,11 @@ export default function DefaultScreenPosts({ navigation }) {
           data={posts}
           keyExtractor={({ id }) => id}
           renderItem={({ item }) => (
-            <Post post={item} navigation={navigation} />
+            <Post
+              post={item}
+              navigation={navigation}
+              setIsLoading={setIsLoading}
+            />
           )}
         />
       </View>
