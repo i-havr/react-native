@@ -1,4 +1,4 @@
-# Awesome Project (users' posts sharing)
+# Sharing photo app
 
 Застосунок, створений на React Native та Expo.
 
