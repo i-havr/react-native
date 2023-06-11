@@ -28,7 +28,7 @@
 
 ## Встановлення застосунку на свій мобільний пристрій та запуск
 
-1. Для запуску необхідно спочатку встановити програму `Expo Go` для [ANDROID](https://play.google.com/store/apps/details?id=host.exp.exponent&referrer=www) або [IOS](https://itunes.apple.com/app/apple-store/id982107779).
-2. Перейти за посиланням [посиланням](https://expo.dev/@i-havr/AwesomeProject?serviceType=classic&distribution=expo-go) з комп'ютера або мобільного пристрою та слідувати відповідній інструкції:
+1. Для запуску необхідно спочатку встановити програму `Expo Go` для [Android](https://play.google.com/store/apps/details?id=host.exp.exponent&referrer=www) або [iOS](https://itunes.apple.com/app/apple-store/id982107779).
+2. Перейти за [посиланням](https://expo.dev/@i-havr/AwesomeProject?serviceType=classic&distribution=expo-go) з комп'ютера або мобільного пристрою та слідувати відповідній інструкції:
    - якщо перейти з комп'ютера, то на мобільному пристрої необхідно відкрити застосунок `Expo Go`, обрати опцію `Scan QR code` та відсканувати відповідний код на сторінці;
    - якщо перейти з мобільного пристрою, то для запуску на відкритій сторінці необхідно натиснути кнопку `Open in Expo Go`.
