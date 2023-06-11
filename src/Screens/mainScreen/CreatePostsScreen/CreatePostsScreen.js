@@ -73,14 +73,14 @@ export default function CreatePostsScreen({ navigation }) {
   }
 
   const addImageLocation = async () => {
-    // const location = await Location.getCurrentPositionAsync({});
+    const location = await Location.getCurrentPositionAsync({});
     const coords = {
-      // latitude: location.coords.latitude,
-      // longitude: location.coords.longitude,
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
 
-      // coords of Venice, Italy
-      latitude: 45.434092,
-      longitude: 12.338497,
+      // coords of Venice, Italy:
+      // latitude: 45.434092,
+      // longitude: 12.338497,
     };
     setLocation(coords);
   };
